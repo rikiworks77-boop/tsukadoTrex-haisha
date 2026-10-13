@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>塚戸Tレックス・配車調整システム</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Firebase SDK (Firestore & App) -->
+    <!-- Firebase Realtime Database SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js";
-        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-database.js";
 
         // ==========================================
         // 🔥 Firebase設定
@@ -24,7 +24,6 @@
             measurementId: "G-1S03DVF1KM"
         };
 
-        // 初期データ定義
         const defaultData = {
             currentTeam: 'A',
             currentTrip: 'to',
@@ -56,27 +55,28 @@
 
         // Firebase初期化
         const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const docRef = doc(db, "tsukado_trex", "car_manager_data");
+        const db = getDatabase(app);
+        const dbRef = ref(db, 'tsukado_trex/car_manager_data');
 
         window.appData = JSON.parse(JSON.stringify(defaultData));
         let isLocalChange = false;
 
-        // リアルタイムリスナー（他人が変更すると即座に画面に反映される）
-        onSnapshot(docRef, (docSnap) => {
-            if (docSnap.exists()) {
+        // リアルタイムリスナー
+        onValue(dbRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
                 if (!isLocalChange) {
-                    window.appData = docSnap.data();
-                    document.getElementById('sync-status').textContent = '🟢 Firebaseリアルタイム同期中';
+                    window.appData = data;
+                    document.getElementById('sync-status').textContent = '🟢 リアルタイム同期中';
                     if (window.renderApp) window.renderApp();
                 }
                 isLocalChange = false;
             } else {
-                setDoc(docRef, defaultData);
+                set(dbRef, defaultData);
             }
         }, (error) => {
-            console.error("Firebase sync error:", error);
-            document.getElementById('sync-status').textContent = '⚠️ 同期エラー（接続を確認してください）';
+            console.error(error);
+            document.getElementById('sync-status').textContent = '⚠️ 同期エラー';
         });
 
         // クラウドへ保存
@@ -84,10 +84,10 @@
             isLocalChange = true;
             document.getElementById('sync-status').textContent = '💾 保存中...';
             try {
-                await setDoc(docRef, window.appData);
-                document.getElementById('sync-status').textContent = '🟢 Firebaseリアルタイム同期中';
+                await set(dbRef, window.appData);
+                document.getElementById('sync-status').textContent = '🟢 リアルタイム同期中';
             } catch (e) {
-                console.error("Save error:", e);
+                console.error(e);
                 document.getElementById('sync-status').textContent = '⚠️ 保存失敗';
                 isLocalChange = false;
             }
@@ -99,7 +99,6 @@
 </head>
 <body class="bg-slate-100 min-h-screen text-slate-800 font-sans">
     <div class="max-w-7xl mx-auto p-4 sm:p-6">
-        <!-- ヘッダー -->
         <header class="bg-blue-900 text-white p-4 sm:p-6 rounded-2xl shadow-lg mb-6 flex flex-col md:flex-row items-center justify-between gap-4">
             <div class="flex items-center gap-4">
                 <div class="relative group cursor-pointer w-16 h-16 bg-white/10 rounded-xl overflow-hidden flex items-center justify-center border-2 border-white/20 shadow-inner">
@@ -111,11 +110,10 @@
                     <h1 class="text-2xl sm:text-3xl font-extrabold tracking-wider flex items-center gap-2">
                         塚戸Tレックス <span class="text-blue-400 text-lg sm:text-xl font-medium">配車調整システム</span>
                     </h1>
-                    <p id="sync-status" class="text-xs text-amber-300 mt-1">🔄 Firebase接続中...</p>
+                    <p id="sync-status" class="text-xs text-amber-300 mt-1">🔄 接続中...</p>
                 </div>
             </div>
 
-            <!-- チームタブ -->
             <div class="flex bg-blue-950/80 p-1.5 rounded-xl border border-blue-800 gap-1" id="team-tabs">
                 <button type="button" onclick="switchTeam('A')" class="team-tab px-4 py-2 rounded-lg text-sm font-bold transition bg-blue-600 text-white shadow" data-team="A">Aチーム</button>
                 <button type="button" onclick="switchTeam('B')" class="team-tab px-4 py-2 rounded-lg text-sm font-bold transition text-blue-200 hover:text-white" data-team="B">Bチーム</button>
@@ -124,7 +122,6 @@
             </div>
         </header>
 
-        <!-- 日程切替・追加バー -->
         <div class="bg-white p-4 rounded-2xl shadow-md mb-6 border border-slate-200">
             <div class="flex flex-col md:flex-row items-center justify-between gap-4 mb-3 pb-3 border-b border-slate-100">
                 <div class="flex items-center gap-2 w-full md:w-auto overflow-x-auto py-1" id="schedule-tabs-container"></div>
@@ -136,7 +133,6 @@
                 </div>
             </div>
 
-            <!-- 現在選択中の日程の詳細設定 -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
                 <div class="flex items-center gap-2">
                     <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">試合日:</label>
@@ -148,7 +144,6 @@
                 </div>
             </div>
 
-            <!-- 行き帰り切替 -->
             <div class="flex justify-center pt-3 mt-3 border-t border-slate-100">
                 <div class="inline-flex bg-slate-100 p-1 rounded-xl shadow-inner">
                     <button type="button" onclick="switchTripType('to')" id="trip-to-btn" class="px-6 py-2 rounded-lg text-sm font-extrabold transition bg-blue-600 text-white shadow">行き（往路・午前）の配車</button>
@@ -157,7 +152,6 @@
             </div>
         </div>
 
-        <!-- リアルタイム残席状況サマリーバー -->
         <div class="bg-gradient-to-r from-blue-900 to-indigo-900 text-white p-4 rounded-2xl shadow-lg mb-6 flex flex-wrap items-center justify-between gap-4">
             <div class="flex items-center gap-6">
                 <div>
@@ -188,16 +182,13 @@
             </div>
         </div>
 
-        <!-- メインコンテンツグリッド -->
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <!-- メンバー管理サイドパネル -->
             <div class="lg:col-span-1 bg-white p-5 rounded-2xl shadow-md border border-slate-200 flex flex-col h-[700px]">
                 <h2 class="text-lg font-black text-blue-900 mb-3 flex items-center justify-between">
                     <span>チームメンバー大元</span>
                     <span id="member-count-badge" class="bg-blue-100 text-blue-800 text-xs px-2.5 py-1 rounded-full">0名</span>
                 </h2>
                 
-                <!-- メンバー追加フォーム -->
                 <form onsubmit="addMember(event)" class="space-y-2 mb-4 bg-slate-50 p-3 rounded-xl border border-slate-200">
                     <div class="text-xs font-bold text-slate-600">新規メンバー登録</div>
                     <input type="text" id="new-member-name" required placeholder="氏名を入力..." class="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
@@ -216,7 +207,6 @@
                     <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-1.5 rounded-lg text-xs transition shadow">メンバーを追加</button>
                 </form>
 
-                <!-- 未割り当てメンバー -->
                 <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex justify-between items-center">
                     <span id="unassigned-title">未割り当て (往路)</span>
                     <span class="text-[10px] text-blue-500">ドラッグで座席へ</span>
@@ -224,7 +214,6 @@
                 <div id="unassigned-list" class="flex-1 overflow-y-auto space-y-2 pr-1 border border-dashed border-slate-200 rounded-xl p-3 bg-slate-50/50" ondragover="allowDrop(event)" ondragleave="removeDragOver(event)" ondrop="dropToUnassigned(event)"></div>
             </div>
 
-            <!-- 車両・駐車場メインエリア -->
             <div class="lg:col-span-3 flex flex-col gap-6">
                 <div class="flex items-center justify-between bg-white p-4 rounded-2xl shadow-md border border-slate-200">
                     <h2 class="text-lg font-black text-blue-900 flex items-center gap-2">
@@ -639,192 +628,4 @@
             const targetMembers = getTargetMembers();
 
             document.getElementById('member-count-badge').textContent = team.members.length + '名';
-            document.getElementById('car-count-badge').textContent = tripData.cars.length + '台';
-            document.getElementById('unassigned-title').textContent = window.appData.currentTrip === 'to' ? '未割り当て (往路・乗車対象)' : '未割り当て (復路・乗車対象)';
-            document.getElementById('stat-target-label').textContent = window.appData.currentTrip === 'to' ? '乗車対象人数(往路)' : '乗車対象人数(復路)';
-
-            const unassignedContainer = document.getElementById('unassigned-list');
-            unassignedContainer.innerHTML = '';
-
-            if(team.members.length === 0) {
-                unassignedContainer.innerHTML = '<div class="text-xs text-slate-400 text-center py-4">メンバーが登録されていません</div>';
-            } else {
-                team.members.forEach(m => {
-                    const isRider = m.role !== 'parent'; 
-                    const isTarget = isRider && (
-                        (window.appData.currentTrip === 'to' && (m.attendance === 'all' || m.attendance === 'am')) ||
-                        (window.appData.currentTrip === 'from' && (m.attendance === 'all' || m.attendance === 'pm'))
-                    );
-
-                    let assignedCarOwner = null;
-                    if(isRider) {
-                        tripData.cars.forEach(car => {
-                            if(car.passengers.includes(m.name)) assignedCarOwner = car.owner;
-                        });
-                    }
-
-                    const el = document.createElement('div');
-                    el.className = `border rounded-xl p-2.5 shadow-sm transition flex flex-col gap-1.5 ${isTarget ? 'bg-white border-slate-200 hover:border-blue-400' : 'bg-slate-100 opacity-70 border-slate-200'}`;
-                    
-                    if(isTarget && !assignedCarOwner) {
-                        el.draggable = true;
-                        el.ondragstart = (e) => dragMember(e, m.name);
-                        el.classList.add('cursor-grab');
-                    }
-
-                    let roleBadge = '<span class="text-[10px] px-1.5 py-0.5 rounded font-bold bg-blue-100 text-blue-800">選手</span>';
-                    if(m.role === 'parent') roleBadge = '<span class="text-[10px] px-1.5 py-0.5 rounded font-bold bg-emerald-100 text-emerald-800">保護者</span>';
-                    if(m.role === 'staff') roleBadge = '<span class="text-[10px] px-1.5 py-0.5 rounded font-bold bg-indigo-100 text-indigo-800">スタッフ</span>';
-
-                    let attBadgeColor = 'bg-slate-200 text-slate-700';
-                    let attText = '終日';
-                    if(m.attendance === 'am') { attBadgeColor = 'bg-amber-100 text-amber-800'; attText = '午前'; }
-                    if(m.attendance === 'pm') { attBadgeColor = 'bg-purple-100 text-purple-800'; attText = '午後'; }
-
-                    el.innerHTML = `
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-1.5">
-                                <span class="font-bold text-sm text-slate-800">${m.name}</span>
-                                ${roleBadge}
-                                <span class="text-[10px] px-1 py-0.5 rounded font-bold ${attBadgeColor}">${attText}</span>
-                            </div>
-                            <button type="button" onclick="removeMember('${m.name}')" class="text-slate-400 hover:text-red-500 text-xs px-1 py-0.5 rounded" title="削除">✕</button>
-                        </div>
-                        <div class="flex items-center justify-between text-[11px] pt-1 border-t border-slate-100">
-                            <div class="flex gap-1">
-                                <select onchange="updateMemberProp('${m.name}', 'role', this.value)" class="bg-slate-50 border border-slate-200 rounded px-1 py-0.5 text-[10px] text-slate-600 outline-none">
-                                    <option value="player" ${m.role==='player'?'selected':''}>選手</option>
-                                    <option value="parent" ${m.role==='parent'?'selected':''}>保護者</option>
-                                    <option value="staff" ${m.role==='staff'?'selected':''}>スタッフ</option>
-                                </select>
-                                <select onchange="updateMemberProp('${m.name}', 'attendance', this.value)" class="bg-slate-50 border border-slate-200 rounded px-1 py-0.5 text-[10px] text-slate-600 outline-none">
-                                    <option value="all" ${m.attendance==='all'?'selected':''}>終日</option>
-                                    <option value="am" ${m.attendance==='am'?'selected':''}>午前</option>
-                                    <option value="pm" ${m.attendance==='pm'?'selected':''}>午後</option>
-                                </select>
-                            </div>
-                            <span>${!isRider ? '<span class="text-slate-400 font-bold">配車対象外</span>' : (assignedCarOwner ? `<span class="text-emerald-600 font-bold">🚗 ${assignedCarOwner}車</span>` : (isTarget ? '<span class="text-amber-500 font-bold">未割当</span>' : '<span class="text-slate-400">対象外</span>'))}</span>
-                        </div>
-                    `;
-                    unassignedContainer.appendChild(el);
-                });
-            }
-
-            const carGrid = document.getElementById('car-grid');
-            carGrid.innerHTML = '';
-
-            let totalCapacity = 0;
-            let totalAssigned = 0;
-
-            tripData.cars.forEach(car => {
-                const effectiveCapacity = car.isGear ? Math.max(0, car.capacity - 3) : car.capacity;
-                totalCapacity += effectiveCapacity;
-
-                const assignedCount = car.passengers.filter((p, idx) => {
-                    if(car.isGear && idx < 3) return false;
-                    return p !== null;
-                }).length;
-                totalAssigned += assignedCount;
-
-                const carCard = document.createElement('div');
-                carCard.className = "bg-white border border-slate-200 rounded-2xl p-5 shadow-md flex flex-col justify-between";
-                
-                let seatsHtml = '';
-                for(let i = 0; i < car.capacity; i++) {
-                    const isGearSeat = car.isGear && i < 3;
-                    const occupant = car.passengers[i];
-
-                    if(isGearSeat) {
-                        seatsHtml += `
-                            <div class="h-14 rounded-xl bg-amber-100 border-2 border-dashed border-amber-300 flex flex-col items-center justify-center text-amber-800 font-bold text-xs select-none shadow-inner">
-                                <span>🎒</span>
-                                <span class="text-[10px]">道具</span>
-                            </div>
-                        `;
-                    } else if(occupant) {
-                        seatsHtml += `
-                            <div draggable="true" ondragstart="dragMember(event, '${occupant}')" 
-                                 ondragover="allowDrop(event)" ondragleave="removeDragOver(event)" ondrop="dropToSeat(event, '${car.id}', ${i})"
-                                 class="h-14 rounded-xl bg-blue-50 border-2 border-blue-400 flex flex-col items-center justify-center text-blue-900 font-bold text-xs cursor-grab hover:bg-blue-100 transition shadow-sm relative group">
-                                <span class="text-[10px] text-blue-500">席 ${i+1}</span>
-                                <span class="truncate px-1 max-w-full">${occupant}</span>
-                                <button type="button" onclick="unassignMember('${occupant}')" class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 bg-red-500 text-white rounded-full w-4 h-4 text-[10px] flex items-center justify-center">×</button>
-                            </div>
-                        `;
-                    } else {
-                        seatsHtml += `
-                            <div ondragover="allowDrop(event)" ondragleave="removeDragOver(event)" ondrop="dropToSeat(event, '${car.id}', ${i})"
-                                 class="h-14 rounded-xl bg-slate-50 border-2 border-dashed border-slate-300 flex flex-col items-center justify-center text-slate-400 text-xs hover:border-blue-400 hover:bg-blue-50/30 transition">
-                                <span class="text-[10px]">席 ${i+1}</span>
-                                <span class="text-[10px]">空席</span>
-                            </div>
-                        `;
-                    }
-                }
-
-                carCard.innerHTML = `
-                    <div>
-                        <div class="flex items-center justify-between mb-3">
-                            <div class="flex items-center gap-2">
-                                <span class="text-xl">🚗</span>
-                                <div>
-                                    <h3 class="font-extrabold text-blue-900">${car.owner}の車</h3>
-                                    <p class="text-xs text-slate-500">定員: ${car.capacity}名 ${car.isGear ? '<span class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold ml-1">道具車</span>' : ''}</p>
-                                </div>
-                            </div>
-                            <button type="button" onclick="deleteCar('${car.id}')" class="text-slate-400 hover:text-red-500 text-xs p-1.5 rounded-lg hover:bg-red-50 transition">削除</button>
-                        </div>
-                        <div class="grid grid-cols-4 gap-2 mb-4">
-                            ${seatsHtml}
-                        </div>
-                    </div>
-                    <div class="text-right text-xs font-bold text-slate-500 border-t border-slate-100 pt-2">
-                        乗車人数: <span class="text-blue-600 font-black">${assignedCount}</span> / ${effectiveCapacity} 名
-                    </div>
-                `;
-                carGrid.appendChild(carCard);
-            });
-
-            if(tripData.cars.length === 0) {
-                carGrid.innerHTML = `
-                    <div class="col-span-2 py-12 text-center bg-white border border-dashed border-slate-300 rounded-2xl">
-                        <p class="text-slate-400 text-sm font-bold">登録されている車がありません。「新しい車を追加」ボタンから登録してください。</p>
-                    </div>
-                `;
-            }
-
-            const totalTarget = targetMembers.length;
-            const unassignedCount = targetMembers.filter(m => {
-                let assigned = false;
-                tripData.cars.forEach(car => {
-                    if(car.passengers.includes(m.name)) assigned = true;
-                });
-                return !assigned;
-            }).length;
-
-            const balance = totalCapacity - totalTarget;
-
-            document.getElementById('stat-total').textContent = totalTarget + '名';
-            document.getElementById('stat-assigned').textContent = (totalTarget - unassignedCount) + '名';
-            document.getElementById('stat-unassigned').textContent = unassignedCount + '名';
-            document.getElementById('stat-seats').textContent = totalCapacity + '席';
-
-            const balanceEl = document.getElementById('stat-balance');
-            const balanceLabelEl = document.getElementById('stat-balance-label');
-            if(balance > 0) {
-                balanceEl.textContent = `余裕 +${balance}席`;
-                balanceEl.className = "text-xl font-black text-emerald-300";
-                balanceLabelEl.textContent = "定員ステータス";
-            } else if(balance === 0) {
-                balanceEl.textContent = "ちょうどピッタシ 0席";
-                balanceEl.className = "text-xl font-black text-blue-200";
-                balanceLabelEl.textContent = "定員ステータス";
-            } else {
-                balanceEl.textContent = `座席不足 ${balance}席`;
-                balanceEl.className = "text-xl font-black text-rose-400";
-                balanceLabelEl.textContent = "⚠️ 要車両追加";
-            }
-        }
-    </script>
-</body>
-</html>
+            document.getElementById('car-count

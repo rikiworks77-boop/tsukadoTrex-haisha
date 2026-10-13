@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>塚戸Tレックス・配車調整システム</title>
-    <script src="https://tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .drag-over { background-color: #eff6ff !important; border-color: #3b82f6 !important; transform: scale(1.02); }
     </style>
@@ -15,7 +15,9 @@
         <header class="bg-blue-900 text-white p-4 sm:p-6 rounded-2xl shadow-lg mb-6 flex flex-col md:flex-row items-center justify-between gap-4">
             <div class="flex items-center gap-4">
                 <div class="relative group cursor-pointer w-16 h-16 bg-white/10 rounded-xl overflow-hidden flex items-center justify-center border-2 border-white/20 shadow-inner">
-                    <div class="w-full h-full bg-blue-800 flex items-center justify-center font-bold text-xl">🦖</div>
+                    <img id="logo-img" src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/..." alt="T-Rex Logo" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-xs font-bold text-center p-1">変更</div>
+                    <input type="file" id="logo-input" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer">
                 </div>
                 <div>
                     <h1 class="text-2xl sm:text-3xl font-extrabold tracking-wider flex items-center gap-2">
@@ -33,148 +35,112 @@
             </div>
         </header>
 
-        <!-- 同期状態ステータス -->
+        <!-- 同期ステータスバー (デザインの邪魔をしないようヘッダー下に配置) -->
         <div id="sync-status" class="mb-4 text-center text-xs font-bold text-slate-500 bg-white py-1 rounded-full shadow-sm max-w-xs mx-auto border border-slate-200">
-            🔄 データを読み込み中...
+            🔄 同期システム準備中...
         </div>
 
-        <!-- 日程切替・詳細設定 -->
+        <!-- 日程（スケジュール）切替・追加バー -->
         <div class="bg-white p-4 rounded-2xl shadow-md mb-6 border border-slate-200">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4 mb-3 pb-3 border-b border-slate-100">
+                <div class="flex items-center gap-2 w-full md:w-auto overflow-x-auto py-1" id="schedule-tabs-container">
+                    <!-- 動的挿入される日程タブ -->
+                </div>
+                <button type="button" onclick="openScheduleModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition shadow flex items-center gap-1.5 whitespace-nowrap">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    新しい日程（試合日）を追加
+                </button>
+            </div>
+
+            <!-- 現在選択中の日程の詳細設定 -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
                 <div class="flex items-center gap-2">
                     <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">試合日:</label>
-                    <input type="date" id="current-schedule-date" onchange="updateDate(this.value)" class="bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none">
+                    <input type="date" id="current-schedule-date" onchange="updateCurrentScheduleDate(this.value)" class="bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none">
                 </div>
                 <div class="flex items-center gap-2 md:col-span-2">
                     <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">行き先・対戦相手:</label>
-                    <input type="text" id="current-schedule-desc" onchange="updateDesc(this.value)" placeholder="例: 〇〇小学校 / vs 〇〇ファイターズ" class="flex-1 bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none">
+                    <input type="text" id="current-schedule-desc" oninput="updateCurrentScheduleDesc(this.value)" placeholder="例: 〇〇小学校 / vs 〇〇ファイターズ" class="flex-1 bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+            </div>
+
+            <!-- 行き帰り切替 -->
+            <div class="flex justify-center pt-3 mt-3 border-t border-slate-100">
+                <div class="inline-flex bg-slate-100 p-1 rounded-xl shadow-inner">
+                    <button type="button" onclick="switchTripType('to')" id="trip-to-btn" class="px-6 py-2 rounded-lg text-sm font-extrabold transition bg-blue-600 text-white shadow">行き（往路・午前）の配車</button>
+                    <button type="button" onclick="switchTripType('from')" id="trip-from-btn" class="px-6 py-2 rounded-lg text-sm font-extrabold transition text-slate-600 hover:text-slate-900">帰り（復路・午後）の配車</button>
                 </div>
             </div>
         </div>
 
-        <!-- メインコンテンツ -->
+        <!-- リアルタイム残席状況サマリーバー -->
+        <div class="bg-gradient-to-r from-blue-900 to-indigo-900 text-white p-4 rounded-2xl shadow-lg mb-6 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-6">
+                <div>
+                    <span id="stat-target-label" class="text-xs text-blue-300 block font-bold">対象乗車人数(往路)</span>
+                    <span id="stat-total" class="text-2xl font-black">0名</span>
+                </div>
+                <div class="h-8 w-px bg-blue-700"></div>
+                <div>
+                    <span class="text-xs text-blue-300 block font-bold">乗車完了</span>
+                    <span id="stat-assigned" class="text-2xl font-black text-emerald-400">0名</span>
+                </div>
+                <div class="h-8 w-px bg-blue-700"></div>
+                <div>
+                    <span class="text-xs text-blue-300 block font-bold">未割り当て</span>
+                    <span id="stat-unassigned" class="text-2xl font-black text-amber-400">0名</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-4 bg-blue-950/60 px-4 py-2 rounded-xl border border-blue-800">
+                <div>
+                    <span class="text-xs text-blue-300 block font-bold">車両総定員 (実効)</span>
+                    <span id="stat-seats" class="text-xl font-bold">0席</span>
+                </div>
+                <div class="h-8 w-px bg-blue-700"></div>
+                <div>
+                    <span id="stat-balance-label" class="text-xs font-bold block">過不足</span>
+                    <span id="stat-balance" class="text-xl font-black">余裕 ±0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- メメインコンテンツグリッド -->
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <!-- 左側：メンバー登録と一覧 -->
-            <div class="lg:col-span-1 bg-white p-5 rounded-2xl shadow-md border border-slate-200 flex flex-col">
+            <!-- メンバー管理サイドパネル -->
+            <div class="lg:col-span-1 bg-white p-5 rounded-2xl shadow-md border border-slate-200 flex flex-col h-[700px]">
                 <h2 class="text-lg font-black text-blue-900 mb-3 flex items-center justify-between">
-                    <span>メンバー大元</span>
-                    <span id="member-count" class="bg-blue-100 text-blue-800 text-xs px-2.5 py-1 rounded-full">0名</span>
+                    <span>チームメンバー大元</span>
+                    <span id="member-count-badge" class="bg-blue-100 text-blue-800 text-xs px-2.5 py-1 rounded-full">0名</span>
                 </h2>
                 
+                <!-- メンバー追加フォーム -->
                 <form onsubmit="addMember(event)" class="space-y-2 mb-4 bg-slate-50 p-3 rounded-xl border border-slate-200">
                     <div class="text-xs font-bold text-slate-600">新規メンバー登録</div>
-                    <input type="text" id="new-member-name" required placeholder="氏名を入力..." class="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-sm outline-none">
-                    <button type="submit" class="w-full bg-blue-600 text-white font-bold p-1.5 rounded-lg text-xs hover:bg-blue-700 transition">追加</button>
+                    <input type="text" id="new-member-name" required placeholder="氏名を入力..." class="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    <div class="grid grid-cols-2 gap-2">
+                        <select id="new-member-role" class="bg-white border border-slate-300 rounded-lg p-1.5 text-xs outline-none">
+                            <option value="選手">選手</option>
+                            <option value="指導者">指導者</option>
+                            <option value="車出当番">車出当番</option>
+                            <option value="配車なし当番">配車なし当番</option>
+                        </select>
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold p-1.5 rounded-lg text-xs transition shadow">登録</button>
+                    </div>
                 </form>
 
-                <div id="member-list" class="space-y-1 overflow-y-auto max-h-[400px]">
-                    <!-- メンバーが動的に入ります -->
+                <!-- 大元メンバーリストスクロールエリア -->
+                <div id="master-member-list" class="flex-1 overflow-y-auto space-y-1.5 pr-1" ondragover="allowDrop(event)" ondrop="dropToMaster(event)">
+                    <!-- JavaScriptで動的生成 -->
                 </div>
             </div>
 
-            <!-- 右側：配車エリア -->
-            <div class="lg:col-span-3 bg-white p-5 rounded-2xl shadow-md border border-slate-200">
-                <h2 class="text-lg font-black text-blue-900 mb-4">配車割当て</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="car-container">
-                    <!-- 各車両のスペース（簡易版） -->
-                    <div class="bg-slate-50 p-4 rounded-xl border-2 border-dashed border-slate-300" ondragover="allowDrop(event)" ondrop="drop(event, 'car1')">
-                        <div class="font-bold text-slate-700 text-sm mb-2">🚗 車両 1 (定員4名)</div>
-                        <div id="car1-list" class="min-h-[80px] space-y-1"></div>
+            <!-- 右側：配車板メイン（車両リスト、機材車などスロット） -->
+            <div class="lg:col-span-3 flex flex-col gap-4">
+                <!-- 車両追加等の操作エリア -->
+                <div class="bg-white p-4 rounded-2xl shadow-md border border-slate-200 flex flex-wrap gap-2 items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm font-bold text-slate-700">🚗 車両・枠の管理:</span>
+                        <button onclick="addNewCarModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1.5 rounded-xl text-xs transition shadow flex items-center gap-1">
+                            ＋ 車両（当番車）枠を追加
+                        </button>
                     </div>
-                    <div class="bg-slate-50 p-4 rounded-xl border-2 border-dashed border-slate-300" ondragover="allowDrop(event)" ondrop="drop(event, 'car2')">
-                        <div class="font-bold text-slate-700 text-sm mb-2">🚗 車両 2 (定員4名)</div>
-                        <div id="car2-list" class="min-h-[80px] space-y-1"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 🌐 リアルタイム同期用スクリプト -->
-    <script>
-        // オンライン保存先（テスト用の無料共有スペース）
-        const BIN_ID = "65fc7fd8266cfc3fde9b8e21"; // あなた専用の一時データ箱
-        const API_URL = `https://jsonbin.io`; 
-        const MASTER_KEY = "$2a$10$6R6h7N4X03XyX9RjHqF0I.g8K5G.8gR8O7M6R5E4W3Q2A1S0D9F8G"; // 簡易アクセスキー
-
-        // システム内のデータ状態
-        let appData = {
-            currentTeam: 'A',
-            date: '',
-            desc: '',
-            members: [],
-            assignments: { car1: [], car2: [] }
-        };
-
-        // ページを開いたとき：自動で最新データをネットから読み込む
-        async function loadData() {
-            try {
-                const res = await fetch(API_URL, {
-                    method: 'GET',
-                    headers: { 'X-Master-Key': MASTER_KEY }
-                });
-                const json = await res.json();
-                if (json.record) {
-                    appData = json.record;
-                    render();
-                    document.getElementById('sync-status').innerText = "✅ 全員とリアルタイム同期中";
-                }
-            } catch (e) {
-                document.getElementById('sync-status').innerText = "❌ 読み込み失敗。リロードしてください";
-            }
-        }
-
-        // 誰かが操作したとき：ネット上のデータを上書きして全員に同期する
-        async function saveData() {
-            document.getElementById('sync-status').innerText = "⏳ 同期中...";
-            try {
-                await fetch(API_URL, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Master-Key': MASTER_KEY
-                    },
-                    body: JSON.stringify(appData)
-                });
-                document.getElementById('sync-status').innerText = "✅ 全員とリアルタイム同期中";
-            } catch (e) {
-                document.getElementById('sync-status').innerText = "⚠️ 保存に失敗しました";
-            }
-        }
-
-        // 画面の再描画処理
-        function render() {
-            document.getElementById('current-schedule-date').value = appData.date || '';
-            document.getElementById('current-schedule-desc').value = appData.desc || '';
-            
-            // チームタブの見た目
-            document.querySelectorAll('.team-tab').forEach(btn => {
-                if (btn.getAttribute('data-team') === appData.currentTeam) {
-                    btn.className = "team-tab px-4 py-2 rounded-lg text-sm font-bold transition bg-blue-600 text-white shadow";
-                } else {
-                    btn.className = "team-tab px-4 py-2 rounded-lg text-sm font-bold transition text-blue-200 hover:text-white";
-                }
-            });
-
-            // メンバー一覧の描画
-            const memberList = document.getElementById('member-list');
-            memberList.innerHTML = '';
-            const filteredMembers = appData.members.filter(m => m.team === appData.currentTeam);
-            document.getElementById('member-count').innerText = filteredMembers.length + "名";
-
-            filteredMembers.forEach(m => {
-                const div = document.createElement('div');
-                div.className = "bg-slate-50 p-2 rounded-lg border border-slate-200 shadow-sm flex justify-between items-center text-xs font-bold cursor-pointer hover:bg-slate-100";
-                div.draggable = true;
-                div.innerText = m.name;
-                div.ondragstart = (e) => e.dataTransfer.setData('text/plain', m.name);
-                memberList.appendChild(div);
-            });
-
-            // 配車車両の描画
-            ['car1', 'car2'].forEach(carId => {
-                const carList = document.getElementById(`${carId}-list`);
-                carList.innerHTML = '';
-                const list = appData.assignments[carId] || [];
-                list.forEach(name => {
-                    const item = document.createElement('div');

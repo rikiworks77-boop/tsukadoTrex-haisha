@@ -23,7 +23,7 @@
                     <h1 class="text-2xl sm:text-3xl font-extrabold tracking-wider flex items-center gap-2">
                         塚戸Tレックス <span class="text-blue-400 text-lg sm:text-xl font-medium">配車調整システム</span>
                     </h1>
-                    <p class="text-xs text-emerald-300 mt-1">💾 自動保存機能有効（変更は自動で端末に保存されます）</p>
+                    <p id="sync-status" class="text-xs text-amber-300 mt-1">🔄 クラウドサーバー接続中...</p>
                 </div>
             </div>
 
@@ -43,7 +43,7 @@
                     <!-- 動的挿入される日程タブ -->
                 </div>
                 <div class="flex items-center gap-2">
-                    <button type="button" onclick="resetCurrentData()" class="bg-rose-100 hover:bg-rose-200 text-rose-700 font-bold px-3 py-2 rounded-xl text-xs transition border border-rose-200">データをリセット</button>
+                    <button type="button" onclick="initCloudSync()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-2 rounded-xl text-xs transition border border-slate-200">🔄 手動同期</button>
                     <button type="button" onclick="openScheduleModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition shadow flex items-center gap-1.5 whitespace-nowrap">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                         新しい日程（試合日）を追加
@@ -218,13 +218,18 @@
     </div>
 
     <script>
-        // ローカルストレージキー
-        const STORAGE_KEY = 'tsukado_trex_car_manager_data_v2';
+        // ==========================================
+        // 🌐 JSONBin.io クラウド同期設定
+        // ==========================================
+        const API_KEY = '$2a$10$2WA8Y9Ykfy1bWTu4hrzc7uIaBnxMHz3z4KBaCnU6nQYhYrBeAqDGG';
+        
+        // ブラウザに記憶させるBin IDの保存キー
+        const BIN_ID_KEY = 'tsukado_trex_bin_id';
+        let BIN_ID = localStorage.getItem(BIN_ID_KEY) || '';
 
-        // 初期データ定義
         const defaultData = {
             currentTeam: 'A',
-            currentTrip: 'to', // 'to': 行き, 'from': 帰り
+            currentTrip: 'to',
             teams: {
                 A: {
                     currentScheduleId: 'sched_1',
@@ -251,32 +256,121 @@
             }
         };
 
-        // ローカルストレージからの読み込みと保存関数
-        let appData = loadData();
+        let appData = JSON.parse(JSON.stringify(defaultData));
+        let isSyncing = false;
+        let saveTimeout = null;
 
-        function loadData() {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved) {
-                try {
-                    return JSON.parse(saved);
-                } catch (e) {
-                    console.error('Data load error:', e);
+        // 初回起動時またはBin未作成時に自動でJSONBinを作成する関数
+        async function createNewBinIfNeeded() {
+            try {
+                document.getElementById('sync-status').textContent = '🔄 クラウドストレージ初期化中...';
+                const response = await fetch('https://api.jsonbin.io/v3/b', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': API_KEY,
+                        'X-Bin-Private': 'false' // チームメンバー全員が読み書きできるように公開（パブリック）
+                    },
+                    body: JSON.stringify(defaultData)
+                });
+                if (response.ok) {
+                    const json = await response.json();
+                    BIN_ID = json.metadata.id;
+                    localStorage.setItem(BIN_ID_KEY, BIN_ID);
+                    appData = json.record;
+                    document.getElementById('sync-status').textContent = '🟢 クラウド常時同期中';
+                    render();
+                } else {
+                    document.getElementById('sync-status').textContent = '⚠️ クラウド初期化失敗';
                 }
-            }
-            return JSON.parse(JSON.stringify(defaultData));
-        }
-
-        function saveData() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
-        }
-
-        function resetCurrentData() {
-            if(confirm('すべてのデータ（メンバー・車・日程）を初期状態にリセットしますか？')) {
-                localStorage.removeItem(STORAGE_KEY);
-                appData = JSON.parse(JSON.stringify(defaultData));
-                render();
+            } catch (err) {
+                console.error(err);
+                document.getElementById('sync-status').textContent = '⚠️ ネットワークエラー';
             }
         }
+
+        // クラウドからのデータ取得
+        async function initCloudSync() {
+            if (!BIN_ID) {
+                await createNewBinIfNeeded();
+                return;
+            }
+
+            document.getElementById('sync-status').textContent = '🔄 同期中...';
+            try {
+                const response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+                    headers: { 'X-Master-Key': API_KEY }
+                });
+                if (response.ok) {
+                    const json = await response.json();
+                    if (json.record) {
+                        appData = json.record;
+                        document.getElementById('sync-status').textContent = '🟢 クラウド常時同期中';
+                    }
+                } else {
+                    // 存在しない場合は新規作成
+                    await createNewBinIfNeeded();
+                    return;
+                }
+            } catch (err) {
+                console.error(err);
+                document.getElementById('sync-status').textContent = '⚠️ 同期エラー';
+            }
+            render();
+        }
+
+        // クラウドへのデータ保存（デボンス処理で連続入力をスムーズに保存）
+        function saveDataToCloud() {
+            if (!BIN_ID || isSyncing) return;
+            
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(async () => {
+                isSyncing = true;
+                document.getElementById('sync-status').textContent = '💾 保存中...';
+
+                try {
+                    const response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Master-Key': API_KEY
+                        },
+                        body: JSON.stringify(appData)
+                    });
+                    if (response.ok) {
+                        document.getElementById('sync-status').textContent = '🟢 クラウド常時同期中';
+                    } else {
+                        document.getElementById('sync-status').textContent = '⚠️ 保存失敗';
+                    }
+                } catch (err) {
+                    console.error(err);
+                    document.getElementById('sync-status').textContent = '⚠️ 保存エラー';
+                }
+                isSyncing = false;
+            }, 800); // 0.8秒待ってから保存送信
+        }
+
+        function triggerUpdate() {
+            saveDataToCloud();
+            render();
+        }
+
+        // 5秒ごとにクラウドの最新状態を自動取得して同期
+        setInterval(async () => {
+            if (!BIN_ID || isSyncing) return;
+            try {
+                const response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+                    headers: { 'X-Master-Key': API_KEY }
+                });
+                if (response.ok) {
+                    const json = await response.json();
+                    if (json.record && JSON.stringify(json.record) !== JSON.stringify(appData)) {
+                        appData = json.record;
+                        render();
+                    }
+                }
+            } catch(e) {}
+        }, 5000);
 
         // ロゴの永続化
         const savedLogo = localStorage.getItem('tsukado_trex_logo');
@@ -299,7 +393,7 @@
 
         function switchTeam(teamKey) {
             appData.currentTeam = teamKey;
-            saveData();
+            triggerUpdate();
             document.querySelectorAll('.team-tab').forEach(btn => {
                 if(btn.dataset.team === teamKey) {
                     btn.className = "team-tab px-4 py-2 rounded-lg text-sm font-bold transition bg-blue-600 text-white shadow";
@@ -307,12 +401,11 @@
                     btn.className = "team-tab px-4 py-2 rounded-lg text-sm font-bold transition text-blue-200 hover:text-white";
                 }
             });
-            render();
         }
 
         function switchTripType(type) {
             appData.currentTrip = type;
-            saveData();
+            triggerUpdate();
             const toBtn = document.getElementById('trip-to-btn');
             const fromBtn = document.getElementById('trip-from-btn');
             if(type === 'to') {
@@ -322,498 +415,9 @@
                 fromBtn.className = "px-6 py-2 rounded-lg text-sm font-extrabold transition bg-blue-600 text-white shadow";
                 toBtn.className = "px-6 py-2 rounded-lg text-sm font-extrabold transition text-slate-600 hover:text-slate-900";
             }
-            render();
         }
 
         function getCurrentSchedule() {
             const team = appData.teams[appData.currentTeam];
             if (!team.schedules || team.schedules.length === 0) {
-                team.schedules = [{
-                    id: 'sched_' + Date.now(),
-                    date: new Date().toISOString().split('T')[0],
-                    destination: '試合',
-                    tripTo: { cars: [] },
-                    tripFrom: { cars: [] }
-                }];
-                team.currentScheduleId = team.schedules[0].id;
-            }
-            let sched = team.schedules.find(s => s.id === team.currentScheduleId);
-            if(!sched) {
-                team.currentScheduleId = team.schedules[0].id;
-                sched = team.schedules[0];
-            }
-            return sched;
-        }
-
-        function switchSchedule(schedId) {
-            appData.teams[appData.currentTeam].currentScheduleId = schedId;
-            saveData();
-            render();
-        }
-
-        function openScheduleModal() {
-            const modal = document.getElementById('schedule-modal');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            document.getElementById('new-sched-date').value = new Date().toISOString().split('T')[0];
-        }
-
-        function closeScheduleModal() {
-            const modal = document.getElementById('schedule-modal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }
-
-        function handleCreateSchedule(event) {
-            event.preventDefault();
-            const dateInput = document.getElementById('new-sched-date').value;
-            const descInput = document.getElementById('new-sched-desc').value.trim();
-            if(!dateInput || !descInput) return;
-
-            const team = appData.teams[appData.currentTeam];
-            const newId = 'sched_' + Date.now();
-            team.schedules.push({
-                id: newId,
-                date: dateInput,
-                destination: descInput,
-                tripTo: { cars: [] },
-                tripFrom: { cars: [] }
-            });
-            team.currentScheduleId = newId;
-            document.getElementById('new-sched-desc').value = '';
-            closeScheduleModal();
-            saveData();
-            render();
-        }
-
-        function updateCurrentScheduleDate(val) {
-            const sched = getCurrentSchedule();
-            if(sched) {
-                sched.date = val;
-                saveData();
-                renderScheduleTabs();
-            }
-        }
-
-        function updateCurrentScheduleDesc(val) {
-            const sched = getCurrentSchedule();
-            if(sched) {
-                sched.destination = val;
-                saveData();
-                renderScheduleTabs();
-            }
-        }
-
-        function getTargetMembers() {
-            const team = appData.teams[appData.currentTeam];
-            return team.members.filter(m => {
-                if(m.role === 'parent') return false; 
-                if(appData.currentTrip === 'to') {
-                    return m.attendance === 'all' || m.attendance === 'am';
-                } else {
-                    return m.attendance === 'all' || m.attendance === 'pm';
-                }
-            });
-        }
-
-        function getCurrentTripData() {
-            const sched = getCurrentSchedule();
-            if(!sched) return { cars: [] };
-            return appData.currentTrip === 'to' ? sched.tripTo : sched.tripFrom;
-        }
-
-        function addMember(event) {
-            event.preventDefault();
-            const input = document.getElementById('new-member-name');
-            const roleSelect = document.getElementById('new-member-role');
-            const attendanceSelect = document.getElementById('new-member-attendance');
-            
-            const name = input.value.trim();
-            if(!name) return;
-            
-            const team = appData.teams[appData.currentTeam];
-            if(team.members.some(m => m.name === name)) {
-                alert('既に登録されている名前です');
-                return;
-            }
-
-            team.members.push({ 
-                name: name, 
-                role: roleSelect.value, 
-                attendance: attendanceSelect.value 
-            });
-            input.value = '';
-            saveData();
-            render();
-        }
-
-        function removeMember(name) {
-            const team = appData.teams[appData.currentTeam];
-            team.members = team.members.filter(m => m.name !== name);
-            team.schedules.forEach(sched => {
-                [sched.tripTo, sched.tripFrom].forEach(trip => {
-                    trip.cars.forEach(car => {
-                        car.passengers = car.passengers.map(p => p === name ? null : p);
-                    });
-                });
-            });
-            saveData();
-            render();
-        }
-
-        function updateMemberProp(name, prop, val) {
-            const team = appData.teams[appData.currentTeam];
-            const member = team.members.find(m => m.name === name);
-            if(member) {
-                member[prop] = val;
-                saveData();
-                render();
-            }
-        }
-
-        function openCarModal() {
-            const modal = document.getElementById('car-modal');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-        }
-
-        function closeCarModal() {
-            const modal = document.getElementById('car-modal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }
-
-        function handleCreateCar(event) {
-            event.preventDefault();
-            const owner = document.getElementById('car-owner').value.trim();
-            const capacity = parseInt(document.getElementById('car-capacity').value);
-            const isGear = document.getElementById('car-is-gear').checked;
-
-            if(!owner) return;
-
-            const sched = getCurrentSchedule();
-            if(!sched) return;
-
-            const carId = 'car_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
-            
-            sched.tripTo.cars.push({
-                id: carId + '_to',
-                owner: owner,
-                capacity: capacity,
-                isGear: isGear,
-                passengers: new Array(capacity).fill(null)
-            });
-
-            sched.tripFrom.cars.push({
-                id: carId + '_from',
-                owner: owner,
-                capacity: capacity,
-                isGear: isGear,
-                passengers: new Array(capacity).fill(null)
-            });
-
-            document.getElementById('car-owner').value = '';
-            document.getElementById('car-is-gear').checked = false;
-            closeCarModal();
-            saveData();
-            render();
-        }
-
-        function deleteCar(carId) {
-            const tripData = getCurrentTripData();
-            tripData.cars = tripData.cars.filter(c => c.id !== carId);
-            saveData();
-            render();
-        }
-
-        // ドラッグ＆ドロップ
-        let draggedMember = null;
-
-        function dragMember(e, name) {
-            draggedMember = name;
-            e.dataTransfer.setData('text/plain', name);
-        }
-
-        function allowDrop(e) {
-            e.preventDefault();
-            e.currentTarget.classList.add('drag-over');
-        }
-
-        function removeDragOver(e) {
-            e.currentTarget.classList.remove('drag-over');
-        }
-
-        function dropToSeat(e, carId, seatIndex) {
-            e.preventDefault();
-            e.currentTarget.classList.remove('drag-over');
-            const memberName = draggedMember || e.dataTransfer.getData('text/plain');
-            if(!memberName) return;
-
-            assignMemberToSeat(carId, seatIndex, memberName);
-        }
-
-        function dropToUnassigned(e) {
-            e.preventDefault();
-            e.currentTarget.classList.remove('drag-over');
-            const memberName = draggedMember || e.dataTransfer.getData('text/plain');
-            if(!memberName) return;
-
-            unassignMember(memberName);
-        }
-
-        function assignMemberToSeat(carId, seatIndex, memberName) {
-            const tripData = getCurrentTripData();
-
-            tripData.cars.forEach(c => {
-                c.passengers = c.passengers.map(p => p === memberName ? null : p);
-            });
-
-            const car = tripData.cars.find(c => c.id === carId);
-            if(car) {
-                if(car.isGear && seatIndex < 3) return;
-                car.passengers[seatIndex] = memberName;
-            }
-            draggedMember = null;
-            saveData();
-            render();
-        }
-
-        function unassignMember(memberName) {
-            const tripData = getCurrentTripData();
-            tripData.cars.forEach(c => {
-                c.passengers = c.passengers.map(p => p === memberName ? null : p);
-            });
-            draggedMember = null;
-            saveData();
-            render();
-        }
-
-        function renderScheduleTabs() {
-            const team = appData.teams[appData.currentTeam];
-            const container = document.getElementById('schedule-tabs-container');
-            if (!container) return;
-            container.innerHTML = '';
-
-            if (!team.schedules || team.schedules.length === 0) return;
-
-            team.schedules.forEach(sched => {
-                const isActive = sched.id === team.currentScheduleId;
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.onclick = () => switchSchedule(sched.id);
-                btn.className = `px-3.5 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap shadow-sm border ${isActive ? 'bg-blue-600 text-white border-blue-600 shadow' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}`;
-                btn.textContent = `${sched.date} (${sched.destination || '無題'})`;
-                container.appendChild(btn);
-            });
-        }
-
-        function render() {
-            const team = appData.teams[appData.currentTeam];
-            const sched = getCurrentSchedule();
-            
-            renderScheduleTabs();
-
-            if(sched) {
-                document.getElementById('current-schedule-date').value = sched.date;
-                document.getElementById('current-schedule-desc').value = sched.destination;
-            }
-
-            const tripData = getCurrentTripData();
-            const targetMembers = getTargetMembers();
-
-            document.getElementById('member-count-badge').textContent = team.members.length + '名';
-            document.getElementById('car-count-badge').textContent = tripData.cars.length + '台';
-            document.getElementById('unassigned-title').textContent = appData.currentTrip === 'to' ? '未割り当て (往路・乗車対象)' : '未割り当て (復路・乗車対象)';
-            document.getElementById('stat-target-label').textContent = appData.currentTrip === 'to' ? '乗車対象人数(往路)' : '乗車対象人数(復路)';
-
-            // メンバー一覧リスト描画
-            const unassignedContainer = document.getElementById('unassigned-list');
-            unassignedContainer.innerHTML = '';
-
-            if(team.members.length === 0) {
-                unassignedContainer.innerHTML = '<div class="text-xs text-slate-400 text-center py-4">メンバーが登録されていません</div>';
-            } else {
-                team.members.forEach(m => {
-                    const isRider = m.role !== 'parent'; 
-                    const isTarget = isRider && (
-                        (appData.currentTrip === 'to' && (m.attendance === 'all' || m.attendance === 'am')) ||
-                        (appData.currentTrip === 'from' && (m.attendance === 'all' || m.attendance === 'pm'))
-                    );
-
-                    let assignedCarOwner = null;
-                    if(isRider) {
-                        tripData.cars.forEach(car => {
-                            if(car.passengers.includes(m.name)) assignedCarOwner = car.owner;
-                        });
-                    }
-
-                    const el = document.createElement('div');
-                    el.className = `border rounded-xl p-2.5 shadow-sm transition flex flex-col gap-1.5 ${isTarget ? 'bg-white border-slate-200 hover:border-blue-400' : 'bg-slate-100 opacity-70 border-slate-200'}`;
-                    
-                    if(isTarget && !assignedCarOwner) {
-                        el.draggable = true;
-                        el.ondragstart = (e) => dragMember(e, m.name);
-                        el.classList.add('cursor-grab');
-                    }
-
-                    let roleBadge = '<span class="text-[10px] px-1.5 py-0.5 rounded font-bold bg-blue-100 text-blue-800">選手</span>';
-                    if(m.role === 'parent') roleBadge = '<span class="text-[10px] px-1.5 py-0.5 rounded font-bold bg-emerald-100 text-emerald-800">保護者</span>';
-                    if(m.role === 'staff') roleBadge = '<span class="text-[10px] px-1.5 py-0.5 rounded font-bold bg-indigo-100 text-indigo-800">スタッフ</span>';
-
-                    let attBadgeColor = 'bg-slate-200 text-slate-700';
-                    let attText = '終日';
-                    if(m.attendance === 'am') { attBadgeColor = 'bg-amber-100 text-amber-800'; attText = '午前'; }
-                    if(m.attendance === 'pm') { attBadgeColor = 'bg-purple-100 text-purple-800'; attText = '午後'; }
-
-                    el.innerHTML = `
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-1.5">
-                                <span class="font-bold text-sm text-slate-800">${m.name}</span>
-                                ${roleBadge}
-                                <span class="text-[10px] px-1 py-0.5 rounded font-bold ${attBadgeColor}">${attText}</span>
-                            </div>
-                            <button type="button" onclick="removeMember('${m.name}')" class="text-slate-400 hover:text-red-500 text-xs px-1 py-0.5 rounded" title="削除">✕</button>
-                        </div>
-                        <div class="flex items-center justify-between text-[11px] pt-1 border-t border-slate-100">
-                            <div class="flex gap-1">
-                                <select onchange="updateMemberProp('${m.name}', 'role', this.value)" class="bg-slate-50 border border-slate-200 rounded px-1 py-0.5 text-[10px] text-slate-600 outline-none">
-                                    <option value="player" ${m.role==='player'?'selected':''}>選手</option>
-                                    <option value="parent" ${m.role==='parent'?'selected':''}>保護者</option>
-                                    <option value="staff" ${m.role==='staff'?'selected':''}>スタッフ</option>
-                                </select>
-                                <select onchange="updateMemberProp('${m.name}', 'attendance', this.value)" class="bg-slate-50 border border-slate-200 rounded px-1 py-0.5 text-[10px] text-slate-600 outline-none">
-                                    <option value="all" ${m.attendance==='all'?'selected':''}>終日</option>
-                                    <option value="am" ${m.attendance==='am'?'selected':''}>午前</option>
-                                    <option value="pm" ${m.attendance==='pm'?'selected':''}>午後</option>
-                                </select>
-                            </div>
-                            <span>${!isRider ? '<span class="text-slate-400 font-bold">配車対象外</span>' : (assignedCarOwner ? `<span class="text-emerald-600 font-bold">🚗 ${assignedCarOwner}車</span>` : (isTarget ? '<span class="text-amber-500 font-bold">未割当</span>' : '<span class="text-slate-400">対象外</span>'))}</span>
-                        </div>
-                    `;
-                    unassignedContainer.appendChild(el);
-                });
-            }
-
-            // 車両一覧描画
-            const carGrid = document.getElementById('car-grid');
-            carGrid.innerHTML = '';
-
-            let totalCapacity = 0;
-            let totalAssigned = 0;
-
-            tripData.cars.forEach(car => {
-                const effectiveCapacity = car.isGear ? Math.max(0, car.capacity - 3) : car.capacity;
-                totalCapacity += effectiveCapacity;
-
-                const assignedCount = car.passengers.filter((p, idx) => {
-                    if(car.isGear && idx < 3) return false;
-                    return p !== null;
-                }).length;
-                totalAssigned += assignedCount;
-
-                const carCard = document.createElement('div');
-                carCard.className = "bg-white border border-slate-200 rounded-2xl p-5 shadow-md flex flex-col justify-between";
-                
-                let seatsHtml = '';
-                for(let i = 0; i < car.capacity; i++) {
-                    const isGearSeat = car.isGear && i < 3;
-                    const occupant = car.passengers[i];
-
-                    if(isGearSeat) {
-                        seatsHtml += `
-                            <div class="h-14 rounded-xl bg-amber-100 border-2 border-dashed border-amber-300 flex flex-col items-center justify-center text-amber-800 font-bold text-xs select-none shadow-inner">
-                                <span>🎒</span>
-                                <span class="text-[10px]">道具</span>
-                            </div>
-                        `;
-                    } else if(occupant) {
-                        seatsHtml += `
-                            <div draggable="true" ondragstart="dragMember(event, '${occupant}')" 
-                                 ondragover="allowDrop(event)" ondragleave="removeDragOver(event)" ondrop="dropToSeat(event, '${car.id}', ${i})"
-                                 class="h-14 rounded-xl bg-blue-50 border-2 border-blue-400 flex flex-col items-center justify-center text-blue-900 font-bold text-xs cursor-grab hover:bg-blue-100 transition shadow-sm relative group">
-                                <span class="text-[10px] text-blue-500">席 ${i+1}</span>
-                                <span class="truncate px-1 max-w-full">${occupant}</span>
-                                <button type="button" onclick="unassignMember('${occupant}')" class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 bg-red-500 text-white rounded-full w-4 h-4 text-[10px] flex items-center justify-center">×</button>
-                            </div>
-                        `;
-                    } else {
-                        seatsHtml += `
-                            <div ondragover="allowDrop(event)" ondragleave="removeDragOver(event)" ondrop="dropToSeat(event, '${car.id}', ${i})"
-                                 class="h-14 rounded-xl bg-slate-50 border-2 border-dashed border-slate-300 flex flex-col items-center justify-center text-slate-400 text-xs hover:border-blue-400 hover:bg-blue-50/30 transition">
-                                <span class="text-[10px]">席 ${i+1}</span>
-                                <span class="text-[10px]">空席</span>
-                            </div>
-                        `;
-                    }
-                }
-
-                carCard.innerHTML = `
-                    <div>
-                        <div class="flex items-center justify-between mb-3">
-                            <div class="flex items-center gap-2">
-                                <span class="text-xl">🚗</span>
-                                <div>
-                                    <h3 class="font-extrabold text-blue-900">${car.owner}の車</h3>
-                                    <p class="text-xs text-slate-500">定員: ${car.capacity}名 ${car.isGear ? '<span class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold ml-1">道具車</span>' : ''}</p>
-                                </div>
-                            </div>
-                            <button type="button" onclick="deleteCar('${car.id}')" class="text-slate-400 hover:text-red-500 text-xs p-1.5 rounded-lg hover:bg-red-50 transition">削除</button>
-                        </div>
-                        <div class="grid grid-cols-4 gap-2 mb-4">
-                            ${seatsHtml}
-                        </div>
-                    </div>
-                    <div class="text-right text-xs font-bold text-slate-500 border-t border-slate-100 pt-2">
-                        乗車人数: <span class="text-blue-600 font-black">${assignedCount}</span> / ${effectiveCapacity} 名
-                    </div>
-                `;
-                carGrid.appendChild(carCard);
-            });
-
-            if(tripData.cars.length === 0) {
-                carGrid.innerHTML = `
-                    <div class="col-span-2 py-12 text-center bg-white border border-dashed border-slate-300 rounded-2xl">
-                        <p class="text-slate-400 text-sm font-bold">登録されている車がありません。「新しい車を追加」ボタンから登録してください。</p>
-                    </div>
-                `;
-            }
-
-            // サマリー計算
-            const totalTarget = targetMembers.length;
-            const unassignedCount = targetMembers.filter(m => {
-                let assigned = false;
-                tripData.cars.forEach(car => {
-                    if(car.passengers.includes(m.name)) assigned = true;
-                });
-                return !assigned;
-            }).length;
-
-            const balance = totalCapacity - totalTarget;
-
-            document.getElementById('stat-total').textContent = totalTarget + '名';
-            document.getElementById('stat-assigned').textContent = (totalTarget - unassignedCount) + '名';
-            document.getElementById('stat-unassigned').textContent = unassignedCount + '名';
-            document.getElementById('stat-seats').textContent = totalCapacity + '席';
-
-            const balanceEl = document.getElementById('stat-balance');
-            const balanceLabelEl = document.getElementById('stat-balance-label');
-            if(balance > 0) {
-                balanceEl.textContent = `余裕 +${balance}席`;
-                balanceEl.className = "text-xl font-black text-emerald-300";
-                balanceLabelEl.textContent = "定員ステータス";
-            } else if(balance === 0) {
-                balanceEl.textContent = "ちょうどピッタシ 0席";
-                balanceEl.className = "text-xl font-black text-blue-200";
-                balanceLabelEl.textContent = "定員ステータス";
-            } else {
-                balanceEl.textContent = `座席不足 ${balance}席`;
-                balanceEl.className = "text-xl font-black text-rose-400";
-                balanceLabelEl.textContent = "⚠️ 要車両追加";
-            }
-        }
-
-        // 初期描画
-        render();
-    </script>
-</body>
-</html>
+                team.s

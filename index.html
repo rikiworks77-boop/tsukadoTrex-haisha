@@ -212,9 +212,12 @@
                     <span id="stat-assigned" class="text-xl sm:text-2xl font-black text-emerald-400">0名</span>
                 </div>
                 <div class="h-8 w-px bg-blue-700"></div>
-                <div>
-                    <span class="text-[10px] sm:text-xs text-blue-300 block font-bold">未割り当て</span>
-                    <span id="stat-unassigned" class="text-xl sm:text-2xl font-black text-amber-400">0名</span>
+                <!-- 未割当部分をクリック可能にして誰かすぐわかるように改善 -->
+                <div onclick="window.openUnassignedModal()" class="cursor-pointer group hover:bg-white/10 px-2 py-1 rounded-xl transition" title="クリックして未割当メンバーを確認">
+                    <span class="text-[10px] sm:text-xs text-amber-300 block font-bold flex items-center gap-1">
+                        未割り当て <span class="text-[9px] underline">🔍確認</span>
+                    </span>
+                    <span id="stat-unassigned" class="text-xl sm:text-2xl font-black text-amber-400 group-hover:scale-105 transition block">0名</span>
                 </div>
             </div>
             <div class="flex items-center justify-between w-full sm:w-auto gap-4 bg-blue-950/60 px-3.5 py-2 rounded-xl border border-blue-800">
@@ -272,7 +275,7 @@
 
                 <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex justify-between items-center">
                     <span id="unassigned-title">一覧・未割り当て</span>
-                    <span class="text-[10px] text-blue-500">ドラッグで配車可</span>
+                    <span class="text-[10px] text-blue-500">ドラッグ / タップで配車</span>
                 </div>
                 <div id="unassigned-list" class="flex-1 overflow-y-auto space-y-2 pr-1 border border-dashed border-slate-200 rounded-xl p-2.5 sm:p-3 bg-slate-50/50 max-h-[400px] lg:max-h-none" ondragover="window.allowDrop(event)" ondragleave="window.removeDragOver(event)" ondrop="window.dropToUnassigned(event)"></div>
             </div>
@@ -291,6 +294,25 @@
                 </div>
 
                 <div id="car-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 未割当メンバー確認・クイック割当モーダル -->
+    <div id="unassigned-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all flex flex-col max-h-[85vh]">
+            <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
+                <h3 class="text-lg font-black text-blue-900 flex items-center gap-2">
+                    <span>⚠️ 未割り当てメンバー一覧</span>
+                </h3>
+                <span id="modal-unassigned-count" class="bg-amber-100 text-amber-800 text-xs px-2.5 py-1 rounded-full font-bold">0名</span>
+            </div>
+            <p class="text-xs text-slate-500 mb-3">現在車が決まっていない乗車対象メンバーです。（タップして車に割当可能）</p>
+            
+            <div id="modal-unassigned-list" class="flex-1 overflow-y-auto space-y-2 pr-1 mb-4"></div>
+
+            <div class="flex justify-end pt-2 border-t border-slate-100">
+                <button type="button" onclick="window.closeUnassignedModal()" class="px-5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-sm font-bold transition w-full">閉じる</button>
             </div>
         </div>
     </div>
@@ -438,6 +460,115 @@
         window.switchMemberSubTab = function(sub) {
             window.appData.memberSubTab = sub;
             window.render();
+        };
+
+        window.openUnassignedModal = function() {
+            renderUnassignedModalList();
+            const modal = document.getElementById('unassigned-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        };
+
+        window.closeUnassignedModal = function() {
+            const modal = document.getElementById('unassigned-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        };
+
+        function renderUnassignedModalList() {
+            const container = document.getElementById('modal-unassigned-list');
+            const countBadge = document.getElementById('modal-unassigned-count');
+            if(!container) return;
+            container.innerHTML = '';
+
+            const team = window.appData.teams[window.appData.currentTeam];
+            const tripData = getCurrentTripData();
+            if(!team || !team.members) return;
+
+            const unassignedMembers = team.members.filter(m => {
+                if(m.attendance === 'absent' || m.attendance === 'self') return false;
+                const isTarget = window.appData.currentTrip === 'to' ? (m.attendance === 'all' || m.attendance === 'am') : (m.attendance === 'all' || m.attendance === 'pm');
+                if(!isTarget) return false;
+
+                let assigned = false;
+                if(tripData && tripData.cars) {
+                    tripData.cars.forEach(car => {
+                        if(car.passengers && car.passengers.includes(m.name)) assigned = true;
+                    });
+                }
+                return !assigned;
+            });
+
+            if(countBadge) countBadge.textContent = unassignedMembers.length + '名';
+
+            if(unassignedMembers.length === 0) {
+                container.innerHTML = '<div class="text-xs text-slate-400 text-center py-6 font-bold">🎉 未割り当てのメンバーはいません！全員配車完了です。</div>';
+                return;
+            }
+
+            unassignedMembers.forEach(m => {
+                let roleName = '選手';
+                if(m.role === 'parent') roleName = '保護者';
+                if(m.role === 'staff') roleName = 'スタッフ';
+
+                let subInfo = m.role === 'player' ? `${m.grade}年` : (m.subCategory || '');
+                if(m.duty && m.duty !== '-') subInfo += ` (${m.duty})`;
+
+                const item = document.createElement('div');
+                item.className = "flex items-center justify-between bg-amber-50/70 border border-amber-300 rounded-xl px-3.5 py-2.5 shadow-sm";
+                item.innerHTML = `
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="font-extrabold text-slate-900 text-sm">${m.name}</span>
+                            <span class="text-[10px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded font-bold">${roleName}</span>
+                            <span class="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-bold">${subInfo}</span>
+                        </div>
+                    </div>
+                    <button type="button" onclick="window.quickAssignPrompt('${m.name}')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition shadow">車に割り当てる ➔</button>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        window.quickAssignPrompt = function(memberName) {
+            const tripData = getCurrentTripData();
+            if(!tripData || !tripData.cars || tripData.cars.length === 0) {
+                alert('出動している車両がありません。上のチェックボックスから車を選んでください。');
+                return;
+            }
+
+            let message = `「${memberName}」をどの車に乗せますか？\n空いている車の番号を選んでください：\n\n`;
+            let availableSeats = [];
+
+            tripData.cars.forEach((car, carIdx) => {
+                if(!car.passengers) car.passengers = new Array(car.capacity).fill(null);
+                const gearStart = car.capacity - 3;
+                car.passengers.forEach((p, seatIdx) => {
+                    const isGearSeat = car.isGear && seatIdx >= gearStart;
+                    if(!p && !isGearSeat) {
+                        availableSeats.push({ carId: car.id, seatIndex: seatIdx, text: `${car.owner}号 (席${seatIdx+1})` });
+                    }
+                });
+            });
+
+            if(availableSeats.length === 0) {
+                alert('現在、すべての車の空きがありません。');
+                return;
+            }
+
+            let seatListStr = availableSeats.map((s, i) => `${i + 1}: ${s.text}`).join('\n');
+            let selectedNum = prompt(message + seatListStr + '\n\n番号（1〜）を入力してください：');
+            
+            if(!selectedNum) return;
+            let index = parseInt(selectedNum) - 1;
+            if(isNaN(index) || index < 0 || index >= availableSeats.length) {
+                alert('無効な番号です。');
+                return;
+            }
+
+            const target = availableSeats[index];
+            window.assignMemberToSeat(target.carId, target.seatIndex, memberName);
+            renderUnassignedModalList();
         };
 
         window.toggleNewMemberRoleOptions = function(role) {
@@ -1302,7 +1433,6 @@
 
                             const el = document.createElement('div');
                             
-                            // 未割り当て（乗車対象なのに車が決まっていない状態）をオレンジ系の目立つ枠線・背景で強調
                             let cardBg = 'bg-white border-slate-200';
                             let isUnassignedTarget = isTarget && !assignedCarOwner;
 
@@ -1311,7 +1441,7 @@
                             } else if(m.attendance === 'self') {
                                 cardBg = 'bg-amber-50 border-amber-200';
                             } else if(isUnassignedTarget) {
-                                cardBg = 'bg-amber-50/90 border-2 border-amber-400 shadow-sm'; // ★未割当を目立たせるスタイル
+                                cardBg = 'bg-rose-50/90 border-2 border-rose-400 shadow-sm';
                             }
 
                             el.className = `border rounded-xl p-2.5 transition flex flex-col gap-1.5 ${cardBg}`;
@@ -1351,8 +1481,12 @@
                             let statusText = '';
                             if(m.attendance === 'absent') statusText = '<span class="text-rose-600 font-bold">💤 休み</span>';
                             else if(m.attendance === 'self') statusText = '<span class="text-amber-600 font-bold">🚗 自車移動</span>';
-                            else if(assignedCarOwner) statusText = `<span class="text-emerald-600 font-bold">🚗 ${assignedCarOwner}号</span>`;
-                            else if(isTarget) statusText = '<span class="text-amber-600 font-black bg-amber-200/60 px-1.5 py-0.5 rounded animate-pulse">⚠️ 未割当</span>'; // ★バッジ風にして目立たせる
+                            else if(assignedCarOwner) {
+                                statusText = `<button type="button" onclick="window.unassignMember('${m.name}')" class="text-emerald-600 font-bold hover:underline bg-emerald-50 px-1.5 py-0.5 rounded">🚗 ${assignedCarOwner}号 (解除)</button>`;
+                            }
+                            else if(isTarget) {
+                                statusText = `<button type="button" onclick="window.quickAssignPrompt('${m.name}')" class="text-rose-600 font-black bg-rose-100 hover:bg-rose-200 px-2 py-0.5 rounded animate-pulse">⚠️ 未割当 (車を選ぶ)</button>`;
+                            }
                             else statusText = '<span class="text-slate-400">対象外</span>';
 
                             el.innerHTML = `
@@ -1442,15 +1576,15 @@
                                      class="h-14 rounded-xl bg-blue-50 border-2 border-blue-400 flex flex-col items-center justify-center text-blue-900 font-bold text-xs cursor-grab hover:bg-blue-100 transition shadow-sm relative group">
                                     <span class="text-[10px] text-blue-500">${seatLabel}</span>
                                     <span class="truncate px-1 max-w-full">${occupant}</span>
-                                    <button type="button" onclick="window.unassignMember('${occupant}')" class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 bg-red-500 text-white rounded-full w-4 h-4 text-[10px] flex items-center justify-center">×</button>
+                                    <button type="button" onclick="window.unassignMember('${occupant}')" class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-4 h-4 text-[10px] flex items-center justify-center">×</button>
                                 </div>
                             `;
                         } else {
                             seatsHtml += `
-                                <div ondragover="window.allowDrop(event)" ondragleave="window.removeDragOver(event)" ondrop="window.dropToSeat(event, '${car.id}', ${i})"
-                                     class="h-14 rounded-xl bg-slate-50 border-2 border-dashed border-slate-300 flex flex-col items-center justify-center text-slate-400 text-xs hover:border-blue-400 hover:bg-blue-50/30 transition">
+                                <div onclick="window.selectSeatForQuickAssign('${car.id}', ${i})" ondragover="window.allowDrop(event)" ondragleave="window.removeDragOver(event)" ondrop="window.dropToSeat(event, '${car.id}', ${i})"
+                                     class="h-14 rounded-xl bg-slate-50 border-2 border-dashed border-slate-300 flex flex-col items-center justify-center text-slate-400 text-xs hover:border-blue-400 hover:bg-blue-50/30 transition cursor-pointer" title="タップして乗せるメンバーを選ぶ">
                                     <span class="text-[10px]">${seatLabel}</span>
-                                    <span class="text-[10px]">空席</span>
+                                    <span class="text-[10px] text-blue-600 font-bold">+ 選択</span>
                                 </div>
                             `;
                         }
@@ -1528,6 +1662,44 @@
                     balanceLabelEl.textContent = "⚠️ 要車両追加";
                 }
             }
+        };
+
+        window.selectSeatForQuickAssign = function(carId, seatIndex) {
+            const team = window.appData.teams[window.appData.currentTeam];
+            const tripData = getCurrentTripData();
+            if(!team || !team.members) return;
+
+            const unassignedMembers = team.members.filter(m => {
+                if(m.attendance === 'absent' || m.attendance === 'self') return false;
+                const isTarget = window.appData.currentTrip === 'to' ? (m.attendance === 'all' || m.attendance === 'am') : (m.attendance === 'all' || m.attendance === 'pm');
+                if(!isTarget) return false;
+
+                let assigned = false;
+                if(tripData && tripData.cars) {
+                    tripData.cars.forEach(car => {
+                        if(car.passengers && car.passengers.includes(m.name)) assigned = true;
+                    });
+                }
+                return !assigned;
+            });
+
+            if(unassignedMembers.length === 0) {
+                alert('未割り当てのメンバーはいません。');
+                return;
+            }
+
+            let msg = 'この席に乗せるメンバーを選んでください：\n\n';
+            let list = unassignedMembers.map((m, i) => `${i + 1}: ${m.name} (${m.role === 'player' ? m.grade + '年' : m.role})`).join('\n');
+            let input = prompt(msg + list + '\n\n番号を入力してください：');
+            if(!input) return;
+
+            let idx = parseInt(input) - 1;
+            if(isNaN(idx) || idx < 0 || idx >= unassignedMembers.length) {
+                alert('無効な番号です。');
+                return;
+            }
+
+            window.assignMemberToSeat(carId, seatIndex, unassignedMembers[idx].name);
         };
 
         window.addEventListener('DOMContentLoaded', () => {

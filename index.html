@@ -24,8 +24,8 @@
         const defaultData = {
             currentTeam: 'A',
             currentTrip: 'to',
-            memberRoleTab: 'player', // player, parent, staff
-            memberSubTab: 'all',     // all または 各学年/属性/役割
+            memberRoleTab: 'player', 
+            memberSubTab: 'all',     
             teams: {
                 A: {
                     currentScheduleId: 'sched_1',
@@ -133,7 +133,20 @@
     </style>
 </head>
 <body class="bg-slate-100 min-h-screen text-slate-800 font-sans antialiased">
-    <div class="max-w-7xl mx-auto p-3 sm:p-6">
+    <!-- パスワード認証モーダル -->
+    <div id="auth-modal" class="fixed inset-0 bg-blue-950 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center transform transition-all">
+            <h2 class="text-xl font-black text-blue-900 mb-2">塚戸Tレックス</h2>
+            <p class="text-xs text-slate-500 mb-4">配車調整システム（アクセスパスワードが必要です）</p>
+            <form onsubmit="window.checkPassword(event)" class="space-y-3">
+                <input type="password" id="auth-password" required placeholder="パスワードを入力..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm text-center font-bold focus:ring-2 focus:ring-blue-500 outline-none">
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-sm transition shadow">認証して入室する</button>
+            </form>
+            <p id="auth-error" class="text-xs text-rose-500 font-bold mt-2 hidden">パスワードが違います</p>
+        </div>
+    </div>
+
+    <div id="main-app" class="max-w-7xl mx-auto p-3 sm:p-6 hidden">
         <header class="bg-blue-900 text-white p-4 sm:p-6 rounded-2xl shadow-lg mb-4 sm:mb-6 flex flex-col md:flex-row items-center justify-between gap-4">
             <div class="flex items-center gap-3 sm:gap-4 w-full md:w-auto justify-between md:justify-start">
                 <div class="flex items-center gap-3">
@@ -194,9 +207,14 @@
                     <button type="button" onclick="window.switchTripType('to')" id="trip-to-btn" class="flex-1 sm:flex-initial px-4 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-extrabold transition bg-blue-600 text-white shadow">行き（往路）</button>
                     <button type="button" onclick="window.switchTripType('from')" id="trip-from-btn" class="flex-1 sm:flex-initial px-4 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-extrabold transition text-slate-600 hover:text-slate-900">帰り（復路）</button>
                 </div>
-                <button type="button" onclick="window.copyToTripFrom()" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition shadow flex items-center justify-center gap-1.5">
-                    <span>📋 往路の配車を復路にそのままコピーする</span>
-                </button>
+                <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                    <button type="button" onclick="window.copyToTripFrom()" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition shadow flex items-center justify-center gap-1.5">
+                        <span>📋 往路の配車を復路にコピー</span>
+                    </button>
+                    <button type="button" onclick="window.copyLineText()" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition shadow flex items-center justify-center gap-1.5">
+                        <span>📱 LINE用テキストを一括コピー</span>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -212,7 +230,6 @@
                     <span id="stat-assigned" class="text-xl sm:text-2xl font-black text-emerald-400">0名</span>
                 </div>
                 <div class="h-8 w-px bg-blue-700"></div>
-                <!-- 未割当部分をクリック可能にして誰かすぐわかるように改善 -->
                 <div onclick="window.openUnassignedModal()" class="cursor-pointer group hover:bg-white/10 px-2 py-1 rounded-xl transition" title="クリックして未割当メンバーを確認">
                     <span class="text-[10px] sm:text-xs text-amber-300 block font-bold flex items-center gap-1">
                         未割り当て <span class="text-[9px] underline">🔍確認</span>
@@ -241,7 +258,6 @@
                     <span id="member-count-badge" class="bg-blue-100 text-blue-800 text-xs px-2.5 py-1 rounded-full">0名</span>
                 </h2>
                 
-                <!-- 新規メンバー登録フォーム -->
                 <form onsubmit="window.addMember(event)" class="space-y-2 mb-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
                     <div class="text-xs font-bold text-slate-600">新規メンバー登録</div>
                     <input type="text" id="new-member-name" required placeholder="氏名を入力..." class="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
@@ -263,14 +279,12 @@
                     <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg text-xs transition shadow">メンバーを追加</button>
                 </form>
 
-                <!-- 役割タブ（選手・保護者・スタッフ） -->
                 <div class="grid grid-cols-3 gap-1 bg-slate-100 p-1 rounded-xl mb-2 text-xs font-bold text-center">
                     <button type="button" onclick="window.switchMemberRoleTab('player')" id="role-tab-player" class="py-2 rounded-lg transition bg-blue-600 text-white shadow">選手</button>
                     <button type="button" onclick="window.switchMemberRoleTab('parent')" id="role-tab-parent" class="py-2 rounded-lg transition text-slate-600 hover:text-slate-900">保護者</button>
                     <button type="button" onclick="window.switchMemberRoleTab('staff')" id="role-tab-staff" class="py-2 rounded-lg transition text-slate-600 hover:text-slate-900">スタッフ</button>
                 </div>
 
-                <!-- サブタブ -->
                 <div id="sub-tabs-container" class="mb-3"></div>
 
                 <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex justify-between items-center">
@@ -409,6 +423,26 @@
     </div>
 
     <script>
+        window.checkPassword = function(event) {
+            event.preventDefault();
+            const pass = document.getElementById('auth-password').value;
+            const err = document.getElementById('auth-error');
+            if(pass === 'trex121212') {
+                document.getElementById('auth-modal').classList.add('hidden');
+                document.getElementById('main-app').classList.remove('hidden');
+                sessionStorage.setItem('trex_authed', 'true');
+            } else {
+                err.classList.remove('hidden');
+            }
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if(sessionStorage.getItem('trex_authed') === 'true') {
+                document.getElementById('auth-modal').classList.add('hidden');
+                document.getElementById('main-app').classList.remove('hidden');
+            }
+        });
+
         const savedLogo = localStorage.getItem('tsukado_trex_logo');
         if(savedLogo) {
             document.getElementById('logo-img').src = savedLogo;
@@ -556,7 +590,7 @@
                 return;
             }
 
-            let seatListStr = availableSeats.map((s, i) => `${i + 1}: ${s.text}`).join('\n');
+            let seatListStr = availableSeats.map((s, i) => `${i + 1}:${s.text}`).join('\n');
             let selectedNum = prompt(message + seatListStr + '\n\n番号（1〜）を入力してください：');
             
             if(!selectedNum) return;
@@ -731,6 +765,197 @@
 
             window.triggerUpdate();
             alert('往路の配車内容を復路にコピーしました！');
+        };
+
+        // =========================================================
+        // ★ LINE一括コピー処理（休み・自車移動は全体の最後に1回のみ記載） ★
+        // =========================================================
+        window.copyLineText = function() {
+            const sched = getCurrentSchedule();
+            const team = window.appData.teams[window.appData.currentTeam];
+            if (!sched || !team || !team.members) return;
+
+            let dateStr = sched.date || '';
+            try {
+                const d = new Date(sched.date);
+                if(!isNaN(d.getTime())) {
+                    const month = d.getMonth() + 1;
+                    const day = d.getDate();
+                    const days = ['日', '月', '火', '水', '木', '金', '土'];
+                    const dayOfWeek = days[d.getDay()];
+                    dateStr = `${month}月${day}日(${dayOfWeek})`;
+                }
+            } catch(e) {}
+
+            // ① 全選手から苗字を集計し、重複カウント（スペース区切りの最初の要素を苗字とする）
+            const lastNameCounts = {};
+            team.members.forEach(m => {
+                if (!m.name || m.role !== 'player') return;
+                const lastName = m.name.trim().split(/[\s ]+/)[0];
+                lastNameCounts[lastName] = (lastNameCounts[lastName] || 0) + 1;
+            });
+
+            // 苗字重複チェックに基づく表示名変換関数
+            const getPlayerDisplayName = (fullName) => {
+                if (!fullName) return '';
+                const foundMember = team.members.find(m => m.name === fullName);
+                if (foundMember && foundMember.role === 'player') {
+                    const lastName = fullName.trim().split(/[\s ]+/)[0];
+                    return lastNameCounts[lastName] > 1 ? fullName : lastName;
+                }
+                return fullName;
+            };
+
+            let dutyMap = { '当番': [], 'スコアラー': [], '塁審': [] };
+            team.members.forEach(m => {
+                if(m.duty && dutyMap[m.duty]) {
+                    dutyMap[m.duty].push(getPlayerDisplayName(m.name));
+                }
+            });
+
+            // 1つの行程分のテキスト生成ヘルパー関数（※個別行程内のタイムフィルタや休みは除外し、車情報のみ生成）
+            const generateTripTextContent = (tripKey) => {
+                const tripData = sched[tripKey];
+                const cars = tripData && tripData.cars ? tripData.cars : [];
+
+                let gearCarsText = [];
+                let moveCarsText = [];
+
+                cars.forEach(car => {
+                    if(!car.passengers) car.passengers = new Array(car.capacity).fill(null);
+                    const gearStartIndex = car.capacity - 3;
+                    
+                    let passengers = [];
+                    let assignedCount = 0;
+                    car.passengers.forEach((p, idx) => {
+                        if (p) {
+                            if (!car.isGear || idx < gearStartIndex) {
+                                passengers.push(getPlayerDisplayName(p));
+                                assignedCount++;
+                            }
+                        }
+                    });
+
+                    // 実効定員（道具車の場合は後ろ3席を除外した人数）
+                    const effectiveCapacity = car.isGear ? Math.max(0, car.capacity - 3) : car.capacity;
+                    // 空き席数を算出
+                    const emptySeats = Math.max(0, effectiveCapacity - assignedCount);
+
+                    // 空き席数に応じて🔵を追加
+                    let emptyMarkers = '';
+                    if (emptySeats > 0) {
+                        emptyMarkers = ' ' + '🔵'.repeat(emptySeats);
+                    }
+
+                    // 車両名に「号」を入れる
+                    const rawOwner = car.owner || '名称未設定';
+                    const carName = rawOwner.endsWith('号') ? rawOwner : `${rawOwner}号`;
+
+                    if (car.isGear) {
+                        gearCarsText.push(`▪️ ${carName}／${passengers.join('・')}${emptyMarkers}`);
+                    } else {
+                        moveCarsText.push(`▪️ ${carName}／${passengers.join('・')}${emptyMarkers}`);
+                    }
+                });
+
+                let contentLines = [];
+                if(gearCarsText.length > 0) {
+                    contentLines.push(`道具車`);
+                    gearCarsText.forEach(t => contentLines.push(t));
+                    contentLines.push(``);
+                }
+
+                if(moveCarsText.length > 0) {
+                    contentLines.push(`移動車`);
+                    moveCarsText.forEach(t => contentLines.push(t));
+                    contentLines.push(``);
+                }
+
+                return contentLines.join('\n');
+            };
+
+            // 往路と復路の配車内容が完全に一致するか比較するためのシリアライズ
+            const getTripCompareKey = (tripData) => {
+                if (!tripData || !tripData.cars) return '';
+                return JSON.stringify(tripData.cars.map(c => ({
+                    owner: c.owner,
+                    isGear: c.isGear,
+                    passengers: c.passengers || []
+                })));
+            };
+
+            const toKey = getTripCompareKey(sched.tripTo);
+            const fromKey = getTripCompareKey(sched.tripFrom);
+            const isSameTrip = (toKey === fromKey);
+
+            let textLines = [];
+
+            // 共通当番情報の追加
+            let headerInfoLines = [];
+            if(dutyMap['当番'].length > 0) headerInfoLines.push(`当番／${dutyMap['当番'].join('・')}`);
+            if(dutyMap['スコアラー'].length > 0) headerInfoLines.push(`スコアラー／${dutyMap['スコアラー'].join('・')}`);
+            if(dutyMap['塁審'].length > 0) headerInfoLines.push(`塁審／${dutyMap['塁審'].join('・')}`);
+
+            if (isSameTrip) {
+                // 往復同一の場合は一括で「往復」として表示
+                textLines.push(`▪️▪️${dateStr} 往復▪️▪️`);
+                if(headerInfoLines.length > 0) {
+                    textLines.push(headerInfoLines.join('\n'));
+                    textLines.push(``);
+                }
+                textLines.push(generateTripTextContent('tripTo'));
+            } else {
+                // 往復異なる場合は「行き（往路）」「帰り（復路）」をそれぞれ個別表示
+                textLines.push(`▪️▪️${dateStr} 行き（往路）▪️▪️`);
+                if(headerInfoLines.length > 0) {
+                    textLines.push(headerInfoLines.join('\n'));
+                    textLines.push(``);
+                }
+                textLines.push(generateTripTextContent('tripTo'));
+
+                textLines.push(`▪️▪️${dateStr} 帰り（復路）▪️▪️`);
+                if(headerInfoLines.length > 0) {
+                    textLines.push(headerInfoLines.join('\n'));
+                    textLines.push(``);
+                }
+                textLines.push(generateTripTextContent('tripFrom'));
+            }
+
+            // ==========================================
+            // ★ 特記・備考（午前・午後・自車移動・お休み）を全体の最後に1回のみまとめて記載
+            // ==========================================
+            let commonNotes = [];
+
+            // 午前・午後のみの表示
+            let amMembers = team.members.filter(m => m.attendance === 'am' && m.role === 'player').map(m => getPlayerDisplayName(m.name));
+            if(amMembers.length > 0) commonNotes.push(`《午前のみ》${amMembers.join('・')}`);
+
+            let pmMembers = team.members.filter(m => m.attendance === 'pm' && m.role === 'player').map(m => getPlayerDisplayName(m.name));
+            if(pmMembers.length > 0) commonNotes.push(`《午後のみ》${pmMembers.join('・')}`);
+
+            // 自車移動の表示
+            let selfMembers = team.members.filter(m => m.attendance === 'self' && m.role === 'player').map(m => getPlayerDisplayName(m.name));
+            if(selfMembers.length > 0) commonNotes.push(`《自車移動》${selfMembers.join('・')}`);
+
+            // お休み（選手のみに限定）の表示
+            let absentMembers = team.members
+                .filter(m => m.attendance === 'absent' && m.role === 'player')
+                .map(m => getPlayerDisplayName(m.name));
+            if(absentMembers.length > 0) commonNotes.push(`《お休み》${absentMembers.join('・')}`);
+
+            if(commonNotes.length > 0) {
+                commonNotes.forEach(note => textLines.push(note));
+            }
+
+            // 末尾の不要な空行を整理して結合
+            const finalOutput = textLines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+
+            navigator.clipboard.writeText(finalOutput).then(() => {
+                alert('📱 LINE用テキストをコピーしました！\nそのままLINE等に貼り付けてご活用いただけます。');
+            }).catch(err => {
+                console.error(err);
+                prompt('以下のテキストを手動でコピーしてください：', finalOutput);
+            });
         };
 
         function getCurrentSchedule() {
@@ -1274,7 +1499,6 @@
                 }
             }
 
-            // サブタブ描画
             const subTabsContainer = document.getElementById('sub-tabs-container');
             if(subTabsContainer) {
                 subTabsContainer.innerHTML = '';
@@ -1313,7 +1537,6 @@
                     const parentContainer = document.createElement('div');
                     parentContainer.className = "flex flex-col gap-1.5 bg-slate-100 p-1.5 rounded-xl text-[11px] font-bold";
 
-                    // 第1段：全員・母・父・兄弟
                     const row1 = document.createElement('div');
                     row1.className = "grid grid-cols-4 gap-1 text-center";
                     const subCats = ['all', '母', '父', '兄弟'];
@@ -1329,7 +1552,6 @@
                     });
                     parentContainer.appendChild(row1);
 
-                    // 第2段：当番・塁審・スコアラー
                     const row2 = document.createElement('div');
                     row2.className = "grid grid-cols-3 gap-1 text-center";
                     const duties = ['当番', '塁審', 'スコアラー'];
@@ -1473,8 +1695,8 @@
 
                             let attBadgeColor = 'bg-slate-200 text-slate-700';
                             let attText = '終日';
-                            if(m.attendance === 'am') { attBadgeColor = 'bg-amber-100 text-amber-800'; attText = '午前'; }
-                            if(m.attendance === 'pm') { attBadgeColor = 'bg-purple-100 text-purple-800'; attText = '午後'; }
+                            if(m.attendance === 'am') { attBadgeColor = 'bg-amber-100 text-amber-800'; attText = '午前のみ'; }
+                            if(m.attendance === 'pm') { attBadgeColor = 'bg-purple-100 text-purple-800'; attText = '午後のみ'; }
                             if(m.attendance === 'self') { attBadgeColor = 'bg-amber-100 text-amber-800 font-bold'; attText = '自車'; }
                             if(m.attendance === 'absent') { attBadgeColor = 'bg-rose-100 text-rose-800 font-bold'; attText = '休み'; }
 
@@ -1487,7 +1709,7 @@
                             else if(isTarget) {
                                 statusText = `<button type="button" onclick="window.quickAssignPrompt('${m.name}')" class="text-rose-600 font-black bg-rose-100 hover:bg-rose-200 px-2 py-0.5 rounded animate-pulse">⚠️ 未割当 (車を選ぶ)</button>`;
                             }
-                            else statusText = '<span class="text-slate-400">対象外</span>';
+                            else statusText = '<span class="text-slate-400">対象外（別時間帯）</span>';
 
                             el.innerHTML = `
                                 <div class="flex items-center justify-between">
@@ -1496,7 +1718,7 @@
                                         ${roleBadge}
                                         ${subBadge}
                                         ${dutyBadge}
-                                        <span class="text-[10px] px-1 py-0.5 rounded font-bold ${attBadgeColor}">${attText}</span>
+                                        <span class="text-[10px] px-1.5 py-0.5 rounded font-bold ${attBadgeColor}">${attText}</span>
                                     </div>
                                     <div class="flex items-center gap-1">
                                         <button type="button" onclick="window.openEditMemberModal('${m.id}')" class="text-blue-500 hover:text-blue-700 text-xs px-1.5 py-0.5 rounded bg-blue-50 hover:bg-blue-100 font-bold transition">編集</button>
@@ -1508,8 +1730,8 @@
                                         <select onchange="window.updateMemberProp('${m.name}', 'attendance', this.value)" class="bg-slate-50 border border-slate-200 rounded px-1.5 py-1 text-xs font-bold ${m.attendance==='absent'?'text-rose-600':(m.attendance==='self'?'text-amber-600':'text-slate-700')} outline-none">
                                             <option value="absent" ${m.attendance==='absent'?'selected':''}>休み</option>
                                             <option value="all" ${m.attendance==='all'?'selected':''}>終日</option>
-                                            <option value="am" ${m.attendance==='am'?'selected':''}>午前</option>
-                                            <option value="pm" ${m.attendance==='pm'?'selected':''}>午後</option>
+                                            <option value="am" ${m.attendance==='am'?'selected':''}>午前のみ</option>
+                                            <option value="pm" ${m.attendance==='pm'?'selected':''}>午後のみ</option>
                                             <option value="self" ${m.attendance==='self'?'selected':''}>自車</option>
                                         </select>
                                         ${m.role === 'parent' ? `
@@ -1549,6 +1771,16 @@
                         return p !== null;
                     }).length;
                     totalAssigned += assignedCount;
+
+                    const remainingSeats = effectiveCapacity - assignedCount;
+                    let seatStatusBadge = '';
+                    if (remainingSeats > 0) {
+                        seatStatusBadge = `<span class="bg-emerald-100 text-emerald-800 text-xs px-2 py-0.5 rounded-full font-bold">🟢 空席 ${remainingSeats}席</span>`;
+                    } else if (remainingSeats === 0) {
+                        seatStatusBadge = `<span class="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full font-bold">🔵 満席</span>`;
+                    } else {
+                        seatStatusBadge = `<span class="bg-rose-100 text-rose-800 text-xs px-2 py-0.5 rounded-full font-bold">🔴 超過</span>`;
+                    }
 
                     const carCard = document.createElement('div');
                     carCard.className = "bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-md flex flex-col justify-between";
@@ -1596,7 +1828,10 @@
                                 <div class="flex items-center gap-2">
                                     <span class="text-xl">🚗</span>
                                     <div>
-                                        <h3 class="font-extrabold text-blue-900">${car.owner}号</h3>
+                                        <div class="flex items-center gap-2">
+                                            <h3 class="font-extrabold text-blue-900">${car.owner}号</h3>
+                                            ${seatStatusBadge}
+                                        </div>
                                         <p class="text-xs text-slate-500">定員: ${car.capacity}名 ${car.isGear ? '<span class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold ml-1">⭐️ 道具車(後ろ3席)</span>' : ''}</p>
                                     </div>
                                 </div>
@@ -1701,12 +1936,6 @@
 
             window.assignMemberToSeat(carId, seatIndex, unassignedMembers[idx].name);
         };
-
-        window.addEventListener('DOMContentLoaded', () => {
-            setTimeout(() => {
-                if(window.render) window.render();
-            }, 500);
-        });
     </script>
 </body>
 </html>

@@ -243,6 +243,7 @@
                     </div>
                     <div class="flex flex-wrap gap-2 w-full lg:w-auto justify-end">
                         <button type="button" onclick="window.copyToTripFrom()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition shadow flex-1 sm:flex-initial">📋 往路を復路にコピー</button>
+                        <button type="button" onclick="window.copyToTripTo()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition shadow flex-1 sm:flex-initial">📋 復路を往路にコピー</button>
                         <button type="button" onclick="window.openLineCopyModal()" class="bg-teal-600 hover:bg-teal-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition shadow flex-1 sm:flex-initial">📱 LINE出力</button>
                     </div>
                 </div>
@@ -645,7 +646,7 @@
             const checkedTeams = Array.from(document.querySelectorAll('input[name="new-member-teams"]:checked')).map(cb => cb.value);
             if(!name) return; if(checkedTeams.length === 0) { alert('所属チームを少なくとも1つ選択してください'); return; }
             if(!window.appData.members) window.appData.members = [];
-            window.appData.members.push({ id: 'mem_' + Date.now() + '_' + Math.floor(Math.random()*10000), name: name, role: role, grade: role === 'player' || role === 'parent' ? sub : '-', parentType: role === 'parent' ? parentType : '-', staffRole: role === 'staff' ? sub : '-', teams: checkedTeams, isKyubu: isKyubu, isSelfTransport: isSelfTransport, attendance: 'absent' });
+            window.appData.members.push({ id: 'mem_' + Date.now() + '_' + Math.floor(Math.random()*10000), name: name, role: role, grade: role === 'player' || role === 'parent' ? sub : '-', parentType: role === 'parent' ? parentType : '-', staffRole: role === 'staff' ? sub : '-', teams: checkedTeams, isKyubu: isKyubu, isSelfTransport: isSelfTransport, attendance: 'all' });
             document.getElementById('new-member-name').value = ''; document.getElementById('new-member-is-kyubu').checked = false; document.getElementById('new-member-is-selftransport').checked = false; window.triggerUpdate();
         };
         window.removeMember = function(id) { if(!confirm('このメンバーを削除しますか？')) return; window.appData.members = window.appData.members.filter(m => m.id !== id); window.triggerUpdate(); };
@@ -799,7 +800,7 @@
             const dataStore = type === 'parent' ? 'parentAttendanceData' : 'attendanceData'; 
             if(!team[dataStore]) team[dataStore] = {}; 
             if(!team[dataStore][schedId]) team[dataStore][schedId] = {}; 
-            if(!team[dataStore][schedId][memberName]) team[dataStore][schedId][memberName] = { status: 'absent', note: '' }; 
+            if(!team[dataStore][schedId][memberName]) team[dataStore][schedId][memberName] = { status: type === 'player' ? 'all' : 'absent', note: '' }; 
             team[dataStore][schedId][memberName][field] = val; 
             window.saveDataOnly(); 
         };
@@ -830,7 +831,7 @@
             } else { 
                 if(!team.attendanceData) team.attendanceData = {}; 
                 if(!team.attendanceData[schedId]) team.attendanceData[schedId] = {}; 
-                if(!team.attendanceData[schedId][memberName]) team.attendanceData[schedId][memberName] = { status: 'absent', note: '' }; 
+                if(!team.attendanceData[schedId][memberName]) team.attendanceData[schedId][memberName] = { status: 'all', note: '' }; 
                 team.attendanceData[schedId][memberName].note = val; 
             } 
             window.saveDataOnly(); 
@@ -902,9 +903,9 @@
                     gradePlayers.forEach(m => {
                         pHtml += `<tr><td class="p-2.5 font-bold sticky left-0 z-10 bg-white shadow-sm whitespace-nowrap">${m.name}</td>`;
                         targetSchedules.forEach(s => {
-                            if(!team.attendanceData[s.id]) team.attendanceData[s.id] = {}; if(!team.attendanceData[s.id][m.name]) team.attendanceData[s.id][m.name] = { status: 'absent', note: '' };
-                            const curStatus = team.attendanceData[s.id][m.name].status || 'absent';
-                            pHtml += `<td class="p-2 text-center border-l"><select onchange="window.updateAttendanceCell('${m.name}', '${s.id}', 'status', this.value, 'player')" class="bg-slate-50 border rounded px-2 py-1.5 text-xs font-bold outline-none shadow-sm"><option value="absent" ${curStatus==='absent'?'selected':''}>× 欠席</option><option value="all" ${curStatus==='all'?'selected':''}>〇 出席</option><option value="am" ${curStatus==='am'?'selected':''}>午前</option><option value="pm" ${curStatus==='pm'?'selected':''}>午後</option></select></td>`;
+                            if(!team.attendanceData[s.id]) team.attendanceData[s.id] = {}; if(!team.attendanceData[s.id][m.name]) team.attendanceData[s.id][m.name] = { status: 'all', note: '' };
+                            const curStatus = team.attendanceData[s.id][m.name].status || 'all';
+                            pHtml += `<td class="p-2 text-center border-l"><select onchange="window.updateAttendanceCell('${m.name}', '${s.id}', 'status', this.value, 'player')" class="bg-slate-50 border rounded px-2 py-1.5 text-xs font-bold outline-none shadow-sm"><option value="all" ${curStatus==='all'?'selected':''}>〇 出席</option><option value="absent" ${curStatus==='absent'?'selected':''}>× 欠席</option><option value="am" ${curStatus==='am'?'selected':''}>午前</option><option value="pm" ${curStatus==='pm'?'selected':''}>午後</option></select></td>`;
                         });
                         const lastSchedId = targetSchedules.length > 0 ? targetSchedules[targetSchedules.length - 1].id : '';
                         const noteVal = (lastSchedId && team.attendanceData[lastSchedId] && team.attendanceData[lastSchedId][m.name]) ? (team.attendanceData[lastSchedId][m.name].note || '') : '';
@@ -1099,8 +1100,8 @@
 
                 teamMembers.forEach(m => {
                     if (m.isSelfTransport && !isAssignedAnywhere(m.name, sched[tripKey]) && !sched[tripKey].optOut.includes(m.name)) {
-                        let attStatus = 'absent';
-                        if (m.role === 'player') attStatus = team.attendanceData?.[sched.id]?.[m.name]?.status || 'absent';
+                        let attStatus = 'all';
+                        if (m.role === 'player') attStatus = team.attendanceData?.[sched.id]?.[m.name]?.status || 'all';
                         else attStatus = team.parentAttendanceData?.[sched.id]?.[m.name]?.status || 'absent';
                         
                         const isAtt = m.role === 'player' ? ['all', 'am', 'pm'].includes(attStatus) : ['all', 'triangle', 'am', 'pm'].includes(attStatus);
@@ -1240,8 +1241,8 @@
             const sel = document.getElementById('seat-assign-member-select');
             sel.innerHTML = '<option value="">-- メンバーを選択 --</option>';
             unassigned.forEach(m => { 
-                let attStatus = 'absent';
-                if (m.role === 'player') attStatus = team.attendanceData?.[sched.id]?.[m.name]?.status || 'absent';
+                let attStatus = 'all';
+                if (m.role === 'player') attStatus = team.attendanceData?.[sched.id]?.[m.name]?.status || 'all';
                 else attStatus = team.parentAttendanceData?.[sched.id]?.[m.name]?.status || 'absent';
                 const isAtt = m.role === 'player' ? ['all', 'am', 'pm'].includes(attStatus) : ['all', 'triangle', 'am', 'pm'].includes(attStatus);
                 
@@ -1269,8 +1270,8 @@
             const targetSelect = document.getElementById('quick-target-member-select');
             targetSelect.innerHTML = '<option value="">-- 未割当メンバーを選択 --</option>';
             unassigned.forEach(m => { 
-                let attStatus = 'absent';
-                if (m.role === 'player') attStatus = team.attendanceData?.[sched.id]?.[m.name]?.status || 'absent';
+                let attStatus = 'all';
+                if (m.role === 'player') attStatus = team.attendanceData?.[sched.id]?.[m.name]?.status || 'all';
                 else attStatus = team.parentAttendanceData?.[sched.id]?.[m.name]?.status || 'absent';
                 const isAtt = m.role === 'player' ? ['all', 'am', 'pm'].includes(attStatus) : ['all', 'triangle', 'am', 'pm'].includes(attStatus);
                 
@@ -1339,6 +1340,15 @@
             window.appData.currentTrip = 'from';
             window.triggerUpdate();
             alert('往路の設定を復路にコピーし、復路タブに切り替えました。');
+        };
+
+        window.copyToTripTo = function() {
+            if(!confirm('復路の配車設定を往路にコピーしますか？')) return;
+            const sched = getCurrentSchedule();
+            sched.tripTo = JSON.parse(JSON.stringify(sched.tripFrom));
+            window.appData.currentTrip = 'to';
+            window.triggerUpdate();
+            alert('復路の設定を往路にコピーし、往路タブに切り替えました。');
         };
 
         window.openLineCopyModal = function() {
@@ -1568,10 +1578,10 @@
                 const notes = {};
 
                 teamMembers.forEach(m => {
-                    let att = 'absent';
+                    let att = 'all';
                     let note = '';
                     if (m.role === 'player') {
-                        att = team.attendanceData?.[sched.id]?.[m.name]?.status || 'absent';
+                        att = team.attendanceData?.[sched.id]?.[m.name]?.status || 'all';
                         note = team.attendanceData?.[sched.id]?.[m.name]?.note || '';
                     } else {
                         att = team.parentAttendanceData?.[sched.id]?.[m.name]?.status || 'absent';
@@ -1628,7 +1638,6 @@
                 text += footerText + '\n';
             });
 
-            // 自動車移動（空席）が含まれている場合のみ🔵の案内を表示し、自転車移動のみの場合は削除
             let hasCar = selectedIds.some(schedId => {
                 const sched = team.schedules.find(s => s.id === schedId);
                 if (!sched) return false;
@@ -1669,8 +1678,8 @@
             const team = window.appData.teams[window.appData.currentTeam];
 
             const attendingMembers = teamMembers.filter(m => {
-                let status = 'absent';
-                if (m.role === 'player') status = team.attendanceData?.[sched.id]?.[m.name]?.status || 'absent';
+                let status = 'all';
+                if (m.role === 'player') status = team.attendanceData?.[sched.id]?.[m.name]?.status || 'all';
                 else status = team.parentAttendanceData?.[sched.id]?.[m.name]?.status || 'absent';
                 return m.role === 'player' ? ['all', 'am', 'pm'].includes(status) : ['all', 'triangle', 'am', 'pm'].includes(status);
             });
@@ -1907,8 +1916,8 @@
             let eligibleMembersCount = 0;
 
             unassignedAll.forEach(m => {
-                let attStatus = 'absent';
-                if (m.role === 'player') attStatus = team.attendanceData?.[sched.id]?.[m.name]?.status || 'absent';
+                let attStatus = 'all';
+                if (m.role === 'player') attStatus = team.attendanceData?.[sched.id]?.[m.name]?.status || 'all';
                 else attStatus = team.parentAttendanceData?.[sched.id]?.[m.name]?.status || 'absent';
                 
                 const isAttending = m.role === 'player' ? ['all', 'am', 'pm'].includes(attStatus) : ['all', 'triangle', 'am', 'pm'].includes(attStatus);

@@ -299,12 +299,10 @@
             </div>
             
             <div id="sched-content-duty" class="space-y-4 hidden">
-                <!-- 追加: 月間当番割当状況サマリー -->
                 <div class="bg-white p-5 rounded-2xl shadow-md border border-slate-200">
                     <h3 class="text-sm font-black text-blue-900 border-b pb-2 mb-3">📊 当月「当番」割当状況（一目で確認）</h3>
                     <p class="text-[10px] text-slate-500 mb-3">※月間で誰が当番をやっているか・やっていないかを確認できます。（休部・当番不可のメンバーは除外）</p>
                     <div id="monthly-duty-status-summary" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <!-- JSで描画 -->
                     </div>
                 </div>
 
@@ -382,7 +380,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js";
         import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-database.js";
 
-        // === ユーティリティ関数追加 ===
         function formatDateWithDay(dateString) {
             if (!dateString) return '';
             const d = new Date(dateString);
@@ -415,7 +412,6 @@
                 return 0;
             });
         }
-        // ============================
 
         const firebaseConfig = {
             apiKey: "AIzaSyAslbHA8YqDEsbWMhJPWD4Yf_38YA19Ies",
@@ -1799,9 +1795,9 @@
             alert('月毎当番テキストをクリップボードにコピーしました！');
         };
 
-        // ==== 【新規追加】 月間当番自動割当ロジック ====
+        // ==== 月間当番自動割当ロジック ====
         window.autoAssignMonthlyDuty = function() {
-            if(!confirm('【月間当番の自動作成】\n現在の月に出席予定の保護者を、各日2名ずつ自動で割り当てます（回数が少ない人が優先されます）。\n※この月の「当番」の既存の手動割り当てはリセットされます。実行しますか？')) return;
+            if(!confirm('【月間当番の自動作成】\n現在の月に出席予定の保護者を、各日2名ずつ自動で割り当てます。\n※「調整中」「午前」「午後」は0.5回分として計算し、全員が確実に1回分（1.0以上）を満たすように優先して割り当てます。\n（既存の手動割り当てはリセットされます）実行しますか？')) return;
 
             const team = window.appData.teams[window.appData.currentTeam];
             const monthSchedules = getFilteredSchedulesForCurrentMonth();
@@ -1811,12 +1807,17 @@
             }
 
             const teamMembers = (window.appData.members || []).filter(m => m.teams && m.teams.includes(window.appData.currentTeam) && !m.isKyubu);
-            const dutyMembers = teamMembers.filter(m => {
+            let dutyMembers = teamMembers.filter(m => {
                 if(m.role !== 'parent') return false; // スタッフは除く（保護者のみ対象）
                 const allowed = m.allowedDuties || ['当番', 'スコアラー', '球数カウント', '塁審'];
                 if(allowed.length === 1 && allowed[0] === 'NONE') return false;
                 return allowed.includes('当番');
             });
+
+            if(dutyMembers.length === 0) {
+                alert('当番可能な保護者が1人もいません。');
+                return;
+            }
 
             // 既存の当番をクリア
             monthSchedules.forEach(s => {
@@ -1824,16 +1825,23 @@
                 s.dutyAssignments['当番'] = [];
             });
 
-            let assignCounts = {};
-            dutyMembers.forEach(m => assignCounts[m.name] = 0);
+            let assignScores = {};
+            dutyMembers.forEach(m => assignScores[m.name] = 0);
+
+            // 当日の出欠ステータスからスコア（重み）を算出する関数
+            const getWeight = (schedId, memberName) => {
+                const att = team.parentAttendanceData?.[schedId]?.[memberName];
+                const status = att ? att.status : 'absent';
+                if (['am', 'pm', 'triangle'].includes(status)) return 0.5;
+                if (status === 'all') return 1.0;
+                return 0;
+            };
 
             // スケジュール順に割り当てていく
             monthSchedules.sort((a,b) => a.date.localeCompare(b.date)).forEach(s => {
                 // この日の出席可能な保護者を抽出
                 let availableForToday = dutyMembers.filter(m => {
-                    const att = team.parentAttendanceData?.[s.id]?.[m.name];
-                    const status = att ? att.status : 'absent';
-                    // 出席、遅刻早退、調整中を含む（absent以外）
+                    const status = team.parentAttendanceData?.[s.id]?.[m.name]?.status || 'absent';
                     if(!['all', 'am', 'pm', 'triangle'].includes(status)) return false;
 
                     // 個別の希望が「×(不可)」でないこと
@@ -1843,10 +1851,12 @@
                     return true;
                 });
 
-                // 割り当て回数が少ない人を優先してソート。同数の場合はランダムにシャッフル
+                // 現時点での割当スコアが少ない人を優先してソート（同スコアならランダム）
                 availableForToday.sort((a, b) => {
-                    if (assignCounts[a.name] !== assignCounts[b.name]) {
-                        return assignCounts[a.name] - assignCounts[b.name];
+                    const scoreA = assignScores[a.name];
+                    const scoreB = assignScores[b.name];
+                    if (scoreA !== scoreB) {
+                        return scoreA - scoreB;
                     }
                     return Math.random() - 0.5;
                 });
@@ -1856,7 +1866,8 @@
                 for(let i = 0; i < 2 && i < availableForToday.length; i++) {
                     const selected = availableForToday[i];
                     assignedToday.push(selected.name);
-                    assignCounts[selected.name]++;
+                    // アサインされたら、当日の出欠に応じたスコアを加算
+                    assignScores[selected.name] += getWeight(s.id, selected.name);
                 }
 
                 s.dutyAssignments['当番'] = assignedToday;
@@ -1866,7 +1877,7 @@
             alert('月間の当番自動割り当てが完了しました。');
         };
 
-        // ==== 【新規追加】 月間当番割当状況サマリーUIの更新 ====
+        // ==== 月間当番割当状況サマリーUIの更新（全休の方も未割当リストへ含める修正） ====
         window.updateMonthlyDutySummary = function() {
             const summaryContainer = document.getElementById('monthly-duty-status-summary');
             if(!summaryContainer) return;
@@ -1875,21 +1886,32 @@
             const monthSchedules = getFilteredSchedulesForCurrentMonth();
             
             const teamMembers = (window.appData.members || []).filter(m => m.teams && m.teams.includes(window.appData.currentTeam) && !m.isKyubu);
-            const dutyMembers = teamMembers.filter(m => {
+            let dutyMembers = teamMembers.filter(m => {
                 if(m.role !== 'parent') return false;
                 const allowed = m.allowedDuties || ['当番', 'スコアラー', '球数カウント', '塁審'];
                 if(allowed.length === 1 && allowed[0] === 'NONE') return false;
                 return allowed.includes('当番');
             });
 
-            let assignCounts = {};
-            dutyMembers.forEach(m => assignCounts[m.name] = 0);
+            // ※【修正箇所】 全休の方を除外していた処理を削除しました。
+            // これにより、全休の人もスコア0のまま「未割当（不足）」リストに正しく表示されるようになります。
+
+            let assignScores = {};
+            dutyMembers.forEach(m => assignScores[m.name] = 0);
+
+            const getWeight = (schedId, memberName) => {
+                const att = team.parentAttendanceData?.[schedId]?.[memberName];
+                const status = att ? att.status : 'absent';
+                if (['am', 'pm', 'triangle'].includes(status)) return 0.5;
+                if (status === 'all') return 1.0;
+                return 0;
+            };
 
             monthSchedules.forEach(s => {
                 const assigned = s.dutyAssignments?.['当番'] || [];
                 assigned.forEach(name => {
-                    if(assignCounts[name] !== undefined) {
-                        assignCounts[name]++;
+                    if(assignScores[name] !== undefined) {
+                        assignScores[name] += getWeight(s.id, name);
                     }
                 });
             });
@@ -1898,24 +1920,25 @@
             let notDoneMembers = [];
 
             dutyMembers.forEach(m => {
-                if(assignCounts[m.name] > 0) {
-                    doneMembers.push(`${m.name} <span class="text-[10px] text-emerald-600 font-bold ml-1">(${assignCounts[m.name]}回)</span>`);
+                const score = assignScores[m.name];
+                if(score >= 1.0) {
+                    doneMembers.push(`${m.name} <span class="text-[10px] text-emerald-600 font-bold ml-1">(${score}回)</span>`);
                 } else {
-                    notDoneMembers.push(m.name);
+                    notDoneMembers.push(`${m.name} <span class="text-[10px] text-rose-500 font-bold ml-1">(${score}回)</span>`);
                 }
             });
 
             let html = `
                 <div class="bg-rose-50 border border-rose-200 rounded-xl p-3 shadow-sm flex flex-col">
-                    <div class="text-xs font-black text-rose-700 border-b border-rose-200 pb-1 mb-2">未割当（今月 0回） <span class="bg-rose-200 text-rose-800 px-1.5 rounded-full">${notDoneMembers.length}名</span></div>
+                    <div class="text-xs font-black text-rose-700 border-b border-rose-200 pb-1 mb-2">未割当・不足（1.0回未満） <span class="bg-rose-200 text-rose-800 px-1.5 rounded-full">${notDoneMembers.length}名</span></div>
                     <div class="flex flex-wrap gap-1.5 text-xs font-bold text-slate-700">
-                        ${notDoneMembers.length > 0 ? notDoneMembers.map(n => `<span class="bg-white border border-rose-200 px-2 py-1 rounded-lg">${n}</span>`).join('') : '<span class="text-slate-400 py-1">全員が1回以上割り当てられています🎉</span>'}
+                        ${notDoneMembers.length > 0 ? notDoneMembers.map(n => `<span class="bg-white border border-rose-200 px-2 py-1 rounded-lg">${n}</span>`).join('') : '<span class="text-slate-400 py-1">全員が1回分（1.0以上）を満たしています🎉</span>'}
                     </div>
                 </div>
                 <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 shadow-sm flex flex-col">
-                    <div class="text-xs font-black text-emerald-700 border-b border-emerald-200 pb-1 mb-2">割当済（今月 1回以上） <span class="bg-emerald-200 text-emerald-800 px-1.5 rounded-full">${doneMembers.length}名</span></div>
+                    <div class="text-xs font-black text-emerald-700 border-b border-emerald-200 pb-1 mb-2">割当済（1.0回以上） <span class="bg-emerald-200 text-emerald-800 px-1.5 rounded-full">${doneMembers.length}名</span></div>
                     <div class="flex flex-wrap gap-1.5 text-xs font-bold text-slate-700">
-                        ${doneMembers.length > 0 ? doneMembers.map(n => `<span class="bg-white border border-emerald-200 px-2 py-1 rounded-lg">${n}</span>`).join('') : '<span class="text-slate-400 py-1">まだ誰も割り当てられていません</span>'}
+                        ${doneMembers.length > 0 ? doneMembers.map(n => `<span class="bg-white border border-emerald-200 px-2 py-1 rounded-lg">${n}</span>`).join('') : '<span class="text-slate-400 py-1">まだ誰も1回分を満たしていません</span>'}
                     </div>
                 </div>
             `;
@@ -2682,7 +2705,7 @@
                 }
             }
             
-            // 【新規追加】 月間当番サマリーを更新
+            // 【更新】 月間当番サマリーを更新
             window.updateMonthlyDutySummary();
         }
     </script>

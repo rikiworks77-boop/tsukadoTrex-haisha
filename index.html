@@ -283,22 +283,33 @@
                 </div>
             </div>
 
-            <div class="flex justify-between items-center border-b border-slate-200 mt-2 pb-2">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-200 mt-2 pb-2 gap-3">
                 <div class="flex gap-2">
                     <button type="button" onclick="window.switchScheduleSubTab('transport')" id="sched-subtab-transport" class="px-5 py-2.5 rounded-t-xl font-black text-sm transition bg-blue-600 text-white shadow">🚗 配車・移動</button>
                     <button type="button" onclick="window.switchScheduleSubTab('duty')" id="sched-subtab-duty" class="px-5 py-2.5 rounded-t-xl font-black text-sm transition bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200">📋 当番・お手伝い</button>
                 </div>
-                <div>
-                    <button type="button" onclick="window.openMonthlyDutyLineModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-4 py-2 rounded-xl text-xs transition shadow flex items-center gap-1.5">📱 月毎当番LINE出力</button>
+                <div class="flex flex-wrap gap-2 justify-end w-full sm:w-auto">
+                    <button type="button" onclick="window.autoAssignMonthlyDuty()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold px-3 py-2 rounded-xl text-xs transition shadow flex items-center gap-1.5">✨ 月間当番自動作成</button>
+                    <button type="button" onclick="window.openMonthlyDutyLineModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-3 py-2 rounded-xl text-xs transition shadow flex items-center gap-1.5">📱 月毎当番LINE出力</button>
                 </div>
             </div>
 
             <div id="sched-content-transport" class="space-y-4">
                 <div id="schedule-transport-container"></div>
             </div>
+            
             <div id="sched-content-duty" class="space-y-4 hidden">
+                <!-- 追加: 月間当番割当状況サマリー -->
                 <div class="bg-white p-5 rounded-2xl shadow-md border border-slate-200">
-                    <h3 class="text-sm font-black text-blue-900 border-b pb-2 mb-4">📋 当番・お手伝い割り当て</h3>
+                    <h3 class="text-sm font-black text-blue-900 border-b pb-2 mb-3">📊 当月「当番」割当状況（一目で確認）</h3>
+                    <p class="text-[10px] text-slate-500 mb-3">※月間で誰が当番をやっているか・やっていないかを確認できます。（休部・当番不可のメンバーは除外）</p>
+                    <div id="monthly-duty-status-summary" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- JSで描画 -->
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl shadow-md border border-slate-200">
+                    <h3 class="text-sm font-black text-blue-900 border-b pb-2 mb-4">📋 当番・お手伝い割り当て (日別)</h3>
                     <p class="text-xs text-slate-500 mb-4">本日の出席者リスト。※ 欠席者もプルダウンから追加可能。</p>
                     <div id="schedule-duty-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
                 </div>
@@ -1788,6 +1799,131 @@
             alert('月毎当番テキストをクリップボードにコピーしました！');
         };
 
+        // ==== 【新規追加】 月間当番自動割当ロジック ====
+        window.autoAssignMonthlyDuty = function() {
+            if(!confirm('【月間当番の自動作成】\n現在の月に出席予定の保護者を、各日2名ずつ自動で割り当てます（回数が少ない人が優先されます）。\n※この月の「当番」の既存の手動割り当てはリセットされます。実行しますか？')) return;
+
+            const team = window.appData.teams[window.appData.currentTeam];
+            const monthSchedules = getFilteredSchedulesForCurrentMonth();
+            if(monthSchedules.length === 0) {
+                alert('この月の活動日がありません。');
+                return;
+            }
+
+            const teamMembers = (window.appData.members || []).filter(m => m.teams && m.teams.includes(window.appData.currentTeam) && !m.isKyubu);
+            const dutyMembers = teamMembers.filter(m => {
+                if(m.role !== 'parent') return false; // スタッフは除く（保護者のみ対象）
+                const allowed = m.allowedDuties || ['当番', 'スコアラー', '球数カウント', '塁審'];
+                if(allowed.length === 1 && allowed[0] === 'NONE') return false;
+                return allowed.includes('当番');
+            });
+
+            // 既存の当番をクリア
+            monthSchedules.forEach(s => {
+                if(!s.dutyAssignments) s.dutyAssignments = {};
+                s.dutyAssignments['当番'] = [];
+            });
+
+            let assignCounts = {};
+            dutyMembers.forEach(m => assignCounts[m.name] = 0);
+
+            // スケジュール順に割り当てていく
+            monthSchedules.sort((a,b) => a.date.localeCompare(b.date)).forEach(s => {
+                // この日の出席可能な保護者を抽出
+                let availableForToday = dutyMembers.filter(m => {
+                    const att = team.parentAttendanceData?.[s.id]?.[m.name];
+                    const status = att ? att.status : 'absent';
+                    // 出席、遅刻早退、調整中を含む（absent以外）
+                    if(!['all', 'am', 'pm', 'triangle'].includes(status)) return false;
+
+                    // 個別の希望が「×(不可)」でないこと
+                    const dutyPref = team.dutyData?.[s.id]?.[m.name]?.roles?.['当番'];
+                    if(dutyPref === '×') return false;
+
+                    return true;
+                });
+
+                // 割り当て回数が少ない人を優先してソート。同数の場合はランダムにシャッフル
+                availableForToday.sort((a, b) => {
+                    if (assignCounts[a.name] !== assignCounts[b.name]) {
+                        return assignCounts[a.name] - assignCounts[b.name];
+                    }
+                    return Math.random() - 0.5;
+                });
+
+                // 各日2人をアサイン
+                let assignedToday = [];
+                for(let i = 0; i < 2 && i < availableForToday.length; i++) {
+                    const selected = availableForToday[i];
+                    assignedToday.push(selected.name);
+                    assignCounts[selected.name]++;
+                }
+
+                s.dutyAssignments['当番'] = assignedToday;
+            });
+
+            window.triggerUpdate();
+            alert('月間の当番自動割り当てが完了しました。');
+        };
+
+        // ==== 【新規追加】 月間当番割当状況サマリーUIの更新 ====
+        window.updateMonthlyDutySummary = function() {
+            const summaryContainer = document.getElementById('monthly-duty-status-summary');
+            if(!summaryContainer) return;
+
+            const team = window.appData.teams[window.appData.currentTeam];
+            const monthSchedules = getFilteredSchedulesForCurrentMonth();
+            
+            const teamMembers = (window.appData.members || []).filter(m => m.teams && m.teams.includes(window.appData.currentTeam) && !m.isKyubu);
+            const dutyMembers = teamMembers.filter(m => {
+                if(m.role !== 'parent') return false;
+                const allowed = m.allowedDuties || ['当番', 'スコアラー', '球数カウント', '塁審'];
+                if(allowed.length === 1 && allowed[0] === 'NONE') return false;
+                return allowed.includes('当番');
+            });
+
+            let assignCounts = {};
+            dutyMembers.forEach(m => assignCounts[m.name] = 0);
+
+            monthSchedules.forEach(s => {
+                const assigned = s.dutyAssignments?.['当番'] || [];
+                assigned.forEach(name => {
+                    if(assignCounts[name] !== undefined) {
+                        assignCounts[name]++;
+                    }
+                });
+            });
+
+            let doneMembers = [];
+            let notDoneMembers = [];
+
+            dutyMembers.forEach(m => {
+                if(assignCounts[m.name] > 0) {
+                    doneMembers.push(`${m.name} <span class="text-[10px] text-emerald-600 font-bold ml-1">(${assignCounts[m.name]}回)</span>`);
+                } else {
+                    notDoneMembers.push(m.name);
+                }
+            });
+
+            let html = `
+                <div class="bg-rose-50 border border-rose-200 rounded-xl p-3 shadow-sm flex flex-col">
+                    <div class="text-xs font-black text-rose-700 border-b border-rose-200 pb-1 mb-2">未割当（今月 0回） <span class="bg-rose-200 text-rose-800 px-1.5 rounded-full">${notDoneMembers.length}名</span></div>
+                    <div class="flex flex-wrap gap-1.5 text-xs font-bold text-slate-700">
+                        ${notDoneMembers.length > 0 ? notDoneMembers.map(n => `<span class="bg-white border border-rose-200 px-2 py-1 rounded-lg">${n}</span>`).join('') : '<span class="text-slate-400 py-1">全員が1回以上割り当てられています🎉</span>'}
+                    </div>
+                </div>
+                <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 shadow-sm flex flex-col">
+                    <div class="text-xs font-black text-emerald-700 border-b border-emerald-200 pb-1 mb-2">割当済（今月 1回以上） <span class="bg-emerald-200 text-emerald-800 px-1.5 rounded-full">${doneMembers.length}名</span></div>
+                    <div class="flex flex-wrap gap-1.5 text-xs font-bold text-slate-700">
+                        ${doneMembers.length > 0 ? doneMembers.map(n => `<span class="bg-white border border-emerald-200 px-2 py-1 rounded-lg">${n}</span>`).join('') : '<span class="text-slate-400 py-1">まだ誰も割り当てられていません</span>'}
+                    </div>
+                </div>
+            `;
+
+            summaryContainer.innerHTML = html;
+        };
+        // ======================================================
+
         function isTripEqual(tripA, tripB, transportMode) {
             if (!tripA || !tripB) return false;
             if (transportMode === 'bike') {
@@ -2541,10 +2677,13 @@
                         addDiv.innerHTML = `<select onchange="if(this.value){ window.toggleDutyAssignment('${role}', this.value, true); this.value=''; }" class="w-full text-xs font-bold border border-slate-300 rounded px-2 py-1.5 bg-white text-slate-600 outline-none">${addOpts}</select>`;
                         roleBox.appendChild(addDiv);
 
-                        dutyGrid.appendChild(roleBox); // dutyBoxからroleBoxに修正
+                        dutyGrid.appendChild(roleBox);
                     });
                 }
             }
+            
+            // 【新規追加】 月間当番サマリーを更新
+            window.updateMonthlyDutySummary();
         }
     </script>
 </body>

@@ -56,7 +56,7 @@
                 <form onsubmit="window.addMember(event)" class="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div>
-                            <label class="block text-xs font-bold text-slate-600 mb-1">氏名</label>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">氏名 <span class="text-[10px] font-normal text-slate-400">※名字と名前の間にスペースを入れてください</span></label>
                             <input type="text" id="new-member-name" required placeholder="例: 田中 大輝" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none">
                         </div>
                         <div>
@@ -74,22 +74,33 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <div id="new-member-duties-container" class="bg-white p-3 rounded-lg border border-slate-300 hidden">
+                        <label class="block text-xs font-bold text-slate-700 mb-2">📋 担当可能な役割（保護者・スタッフ用）</label>
+                        <div class="flex flex-wrap gap-4">
+                            <label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="new-member-duties" value="当番" checked class="rounded w-4 h-4 text-blue-600"> 当番</label>
+                            <label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="new-member-duties" value="スコアラー" checked class="rounded w-4 h-4 text-blue-600"> スコアラー</label>
+                            <label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="new-member-duties" value="球数カウント" checked class="rounded w-4 h-4 text-blue-600"> 球数カウント</label>
+                            <label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="new-member-duties" value="塁審" checked class="rounded w-4 h-4 text-blue-600"> 塁審</label>
+                        </div>
+                    </div>
+
                     <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-white p-2.5 rounded-lg border border-slate-300">
                         <div class="flex-1">
                             <label class="block text-xs font-bold text-slate-600 mb-1">所属チーム（複数選択可）</label>
                             <div class="flex gap-4">
-                                <label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="new-member-teams" value="A" checked class="rounded"> A</label>
-                                <label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="new-member-teams" value="B" class="rounded"> B</label>
-                                <label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="new-member-teams" value="C" class="rounded"> C</label>
-                                <label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="new-member-teams" value="D" class="rounded"> D</label>
+                                <label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="new-member-teams" value="A" checked class="rounded w-4 h-4 text-blue-600"> A</label>
+                                <label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="new-member-teams" value="B" class="rounded w-4 h-4 text-blue-600"> B</label>
+                                <label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="new-member-teams" value="C" class="rounded w-4 h-4 text-blue-600"> C</label>
+                                <label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="new-member-teams" value="D" class="rounded w-4 h-4 text-blue-600"> D</label>
                             </div>
                         </div>
                         <div class="flex items-center gap-3 pt-2 sm:pt-4">
                             <label class="flex items-center gap-1.5 text-xs font-bold text-blue-700 cursor-pointer bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-200">
-                                <input type="checkbox" id="new-member-is-selftransport" class="rounded text-blue-600"> 基本自車移動
+                                <input type="checkbox" id="new-member-is-selftransport" class="rounded w-4 h-4 text-blue-600"> 基本自車移動
                             </label>
                             <label class="flex items-center gap-1.5 text-xs font-bold text-amber-700 cursor-pointer bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-200">
-                                <input type="checkbox" id="new-member-is-kyubu" class="rounded"> 休部にする
+                                <input type="checkbox" id="new-member-is-kyubu" class="rounded w-4 h-4 text-amber-600"> 休部にする
                             </label>
                         </div>
                     </div>
@@ -138,10 +149,10 @@
                     <div>
                         <label class="block text-xs font-bold text-slate-600 mb-1">利用チーム（複数選択可）</label>
                         <div class="flex gap-4 bg-white p-2.5 rounded-lg border border-slate-300">
-                            <label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="master-car-teams" value="A" checked class="rounded"> A</label>
-                            <label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="master-car-teams" value="B" class="rounded"> B</label>
-                            <label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="master-car-teams" value="C" class="rounded"> C</label>
-                            <label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="master-car-teams" value="D" class="rounded"> D</label>
+                            <label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="master-car-teams" value="A" checked class="rounded w-4 h-4 text-blue-600"> A</label>
+                            <label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="master-car-teams" value="B" class="rounded w-4 h-4 text-blue-600"> B</label>
+                            <label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="master-car-teams" value="C" class="rounded w-4 h-4 text-blue-600"> C</label>
+                            <label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="master-car-teams" value="D" class="rounded w-4 h-4 text-blue-600"> D</label>
                         </div>
                     </div>
                     <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg text-sm transition shadow">車両を追加する</button>
@@ -172,16 +183,30 @@
             <div id="att-content-parent" class="space-y-6 hidden">
                 <div class="bg-white p-5 rounded-2xl shadow-md border border-slate-200">
                     <h3 class="font-black text-slate-800 text-sm mb-3 pb-2 border-b border-slate-100">👨‍👩‍👧 保護者・スタッフ 出欠確認（学年・役割別）</h3>
+                    
+                    <div id="attendance-parent-monthly-settings" class="mb-4 pb-4 border-b border-slate-100 space-y-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">【締め切り】</label>
+                                <input type="text" id="monthly-deadline-input" placeholder="例: 10月20日" onchange="window.updateMonthlySetting('deadline', this.value)" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none font-bold">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">【特記事項（行事など自由記入）】</label>
+                                <input type="text" id="monthly-notes-input" placeholder="例: 10月25日は▲▲小運動会等" onchange="window.updateMonthlySetting('notes', this.value)" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none font-bold">
+                            </div>
+                        </div>
+                    </div>
+
                     <div id="attendance-parent-container" class="space-y-6"></div>
                 </div>
                 <div class="bg-white p-5 rounded-2xl shadow-md border border-slate-200">
-                    <h3 class="font-black text-slate-800 text-sm mb-3 pb-2 border-b border-slate-100">📋 保護者・スタッフ お手伝い希望 ＆ 備考（出席者のみ表示）</h3>
+                    <h3 class="font-black text-slate-800 text-sm mb-3 pb-2 border-b border-slate-100">📋 保護者 お手伝い確認</h3>
                     <div id="attendance-duty-table" class="overflow-auto max-h-[600px] border rounded-xl shadow-inner"></div>
                 </div>
             </div>
             <div id="att-content-car" class="space-y-6 hidden">
                 <div class="bg-white p-5 rounded-2xl shadow-md border border-slate-200">
-                    <h3 class="font-black text-slate-800 text-sm mb-3 pb-2 border-b border-slate-100">🚗 車両出動可否の確認（◎:道具車・出動可 / 〇:出動可 / ×:不可 / △:午前 / ▲:午後）</h3>
+                    <h3 class="font-black text-slate-800 text-sm mb-3 pb-2 border-b border-slate-100">🚗 車両出動可否の確認（◎:道具車・出動可 / 〇:出動可 / ×:不可 / △:午前 / ▲:午後 / 調整中）</h3>
                     <div id="attendance-car-table" class="overflow-auto max-h-[500px] border rounded-xl shadow-inner"></div>
                 </div>
             </div>
@@ -189,7 +214,6 @@
 
         <!-- タブ③: 活動日程・スケジュール調整・配車管理 -->
         <div id="tab-content-schedule" class="space-y-4 hidden">
-            <!-- 日程情報ヘッダー部 -->
             <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-md border border-slate-200">
                 <div class="flex flex-col gap-3 mb-4 pb-3 border-b border-slate-100">
                     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
@@ -224,8 +248,18 @@
                     </div>
                 </div>
                 <div class="pt-3 border-t border-slate-100 mb-3">
-                    <label class="block text-xs font-bold text-slate-600 mb-1">📋 当番・お手伝い募集項目（カンマ区切り）:</label>
-                    <input type="text" id="current-schedule-duty-roles" onchange="window.updateCurrentScheduleDutyRoles(this.value)" placeholder="例: 自転車引率, スコアラー, 塁審2名" class="w-full bg-slate-50 border rounded-lg px-3 py-1.5 text-xs font-bold outline-none">
+                    <label class="block text-xs font-bold text-slate-600 mb-1">📋 当番・お手伝い募集項目:</label>
+                    <div class="flex flex-wrap items-center gap-4 bg-slate-50 border rounded-lg px-3 py-2">
+                        <label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="duty-role-cb" value="当番" onchange="window.updateDutyRolesCb()" class="rounded w-4 h-4 text-blue-600"> 当番</label>
+                        <label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="duty-role-cb" value="スコアラー" onchange="window.updateDutyRolesCb()" class="rounded w-4 h-4 text-blue-600"> スコアラー</label>
+                        <label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="duty-role-cb" value="球数カウント" onchange="window.updateDutyRolesCb()" class="rounded w-4 h-4 text-blue-600"> 球数カウント</label>
+                        <label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="duty-role-cb" value="塁審" onchange="window.updateDutyRolesCb()" class="rounded w-4 h-4 text-blue-600"> 塁審</label>
+                        
+                        <div class="flex items-center gap-1.5 ml-0 sm:ml-2 border-l-0 sm:border-l border-slate-300 pl-0 sm:pl-4">
+                            <input type="checkbox" id="custom-duty-cb" onchange="window.updateDutyRolesCb()" class="rounded w-4 h-4 text-emerald-600 cursor-pointer">
+                            <input type="text" id="custom-duty-input" onchange="window.updateDutyRolesCb()" placeholder="その他(自由記入)" class="bg-white border border-slate-300 rounded px-2 py-1.5 text-xs font-bold outline-none w-36 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition shadow-sm">
+                        </div>
+                    </div>
                 </div>
                 <div class="flex flex-col sm:flex-row items-center justify-between pt-3 border-t border-slate-100 gap-3">
                     <div class="flex items-center gap-2 w-full sm:w-auto">
@@ -244,22 +278,24 @@
                     <div class="flex flex-wrap gap-2 w-full lg:w-auto justify-end">
                         <button type="button" onclick="window.copyToTripFrom()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition shadow flex-1 sm:flex-initial">📋 往路を復路にコピー</button>
                         <button type="button" onclick="window.copyToTripTo()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition shadow flex-1 sm:flex-initial">📋 復路を往路にコピー</button>
-                        <button type="button" onclick="window.openLineCopyModal()" class="bg-teal-600 hover:bg-teal-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition shadow flex-1 sm:flex-initial">📱 LINE出力</button>
+                        <button type="button" onclick="window.openLineCopyModal()" class="bg-teal-600 hover:bg-teal-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition shadow flex-1 sm:flex-initial">📱 個別LINE出力</button>
                     </div>
                 </div>
             </div>
 
-            <!-- サブタブ切り替え -->
-            <div class="flex gap-2 border-b border-slate-200 mt-2 pb-2">
-                <button type="button" onclick="window.switchScheduleSubTab('transport')" id="sched-subtab-transport" class="px-5 py-2.5 rounded-t-xl font-black text-sm transition bg-blue-600 text-white shadow">🚗 配車・移動</button>
-                <button type="button" onclick="window.switchScheduleSubTab('duty')" id="sched-subtab-duty" class="px-5 py-2.5 rounded-t-xl font-black text-sm transition bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200">📋 当番・お手伝い</button>
+            <div class="flex justify-between items-center border-b border-slate-200 mt-2 pb-2">
+                <div class="flex gap-2">
+                    <button type="button" onclick="window.switchScheduleSubTab('transport')" id="sched-subtab-transport" class="px-5 py-2.5 rounded-t-xl font-black text-sm transition bg-blue-600 text-white shadow">🚗 配車・移動</button>
+                    <button type="button" onclick="window.switchScheduleSubTab('duty')" id="sched-subtab-duty" class="px-5 py-2.5 rounded-t-xl font-black text-sm transition bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200">📋 当番・お手伝い</button>
+                </div>
+                <div>
+                    <button type="button" onclick="window.openMonthlyDutyLineModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-4 py-2 rounded-xl text-xs transition shadow flex items-center gap-1.5">📱 月毎当番LINE出力</button>
+                </div>
             </div>
 
-            <!-- 配車・移動コンテナ -->
             <div id="sched-content-transport" class="space-y-4">
                 <div id="schedule-transport-container"></div>
             </div>
-            <!-- 当番・お手伝いコンテナ -->
             <div id="sched-content-duty" class="space-y-4 hidden">
                 <div class="bg-white p-5 rounded-2xl shadow-md border border-slate-200">
                     <h3 class="text-sm font-black text-blue-900 border-b pb-2 mb-4">📋 当番・お手伝い割り当て</h3>
@@ -271,17 +307,28 @@
     </main>
 
     <!-- モーダル群 -->
-    <div id="edit-member-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50"><div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4"><h3 class="text-lg font-black text-blue-900">メンバー情報の編集</h3><form onsubmit="window.handleUpdateMember(event)" class="space-y-3"><input type="hidden" id="edit-member-id"><div><label class="block text-xs font-bold text-slate-600 mb-1">氏名</label><input type="text" id="edit-member-name" required class="w-full bg-slate-50 border rounded-lg px-3 py-2 text-sm outline-none font-bold"></div><div><label class="block text-xs font-bold text-slate-600 mb-1">役割</label><select id="edit-member-role" onchange="window.toggleNewMemberRoleOptions(this.value, 'edit')" class="w-full bg-slate-50 border rounded-lg px-3 py-2 text-sm font-bold outline-none"><option value="player">選手</option><option value="parent">保護者</option><option value="staff">スタッフ</option><option value="family">家族</option></select></div><div id="edit-member-sub-container"><label class="block text-xs font-bold text-slate-600 mb-1" id="edit-member-sub-label">学年</label><div id="edit-member-sub-wrapper" class="flex gap-2"></div></div><div><label class="block text-xs font-bold text-slate-600 mb-1">所属チーム</label><div class="flex gap-4 bg-slate-50 p-2.5 rounded-lg border"><label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-member-teams" value="A" class="rounded"> A</label><label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-member-teams" value="B" class="rounded"> B</label><label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-member-teams" value="C" class="rounded"> C</label><label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-member-teams" value="D" class="rounded"> D</label></div></div><div class="flex gap-4 pt-1"><label class="flex items-center gap-1.5 text-xs font-bold text-blue-700 cursor-pointer bg-blue-50 px-3 py-2 rounded-lg border border-blue-200"><input type="checkbox" id="edit-member-is-selftransport" class="rounded text-blue-600"> 基本自車移動</label><label class="flex items-center gap-1.5 text-xs font-bold text-amber-700 cursor-pointer bg-amber-50 px-3 py-2 rounded-lg border border-amber-200"><input type="checkbox" id="edit-member-is-kyubu" class="rounded"> 休部にする</label></div><div class="flex gap-2 pt-2"><button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-xs transition shadow">保存する</button><button type="button" onclick="window.closeEditMemberModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2.5 rounded-xl text-xs transition">キャンセル</button></div></form></div></div>
-    <div id="edit-car-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50"><div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto"><h3 class="text-lg font-black text-blue-900">車両マスターの編集（固定メンバー）</h3><form onsubmit="window.handleUpdateMasterCar(event)" class="space-y-3"><input type="hidden" id="edit-car-id"><div><label class="block text-xs font-bold text-slate-600 mb-1">車両名（オーナー名）</label><input type="text" id="edit-car-owner" required class="w-full bg-slate-50 border rounded-lg px-3 py-2 text-sm outline-none font-bold"></div><div><label class="block text-xs font-bold text-slate-600 mb-1">ドライバー</label><select id="edit-car-driver" required class="w-full bg-slate-50 border rounded-lg px-3 py-2 text-sm font-bold outline-none text-slate-700"></select></div><div class="grid grid-cols-2 gap-2"><div><label class="block text-xs font-bold text-slate-600 mb-1">乗車定員</label><select id="edit-car-capacity" onchange="window.renderCarSeatsUI(this.value, 'edit-car-fixed-seats', 'edit')" class="w-full bg-slate-50 border rounded-lg px-2 py-2 text-xs font-bold outline-none"><option value="5">5人乗り</option><option value="7">7人乗り</option><option value="8">8人乗り</option></select></div><div><label class="block text-xs font-bold text-slate-600 mb-1">道具車枠(通常3)</label><input type="number" id="edit-car-gearseats" min="0" max="8" class="w-full bg-slate-50 border rounded-lg px-2 py-2 text-sm font-bold outline-none"></div></div><div class="bg-slate-50 p-3 rounded-lg border border-slate-200 mt-2"><label class="block text-xs font-bold text-slate-600 mb-2">🚗 固定同乗者の事前登録</label><div id="edit-car-fixed-seats" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div></div><div><label class="block text-xs font-bold text-slate-600 mb-1">利用チーム</label><div class="flex gap-4 bg-slate-50 p-2.5 rounded-lg border"><label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-car-teams" value="A" class="rounded"> A</label><label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-car-teams" value="B" class="rounded"> B</label><label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-car-teams" value="C" class="rounded"> C</label><label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-car-teams" value="D" class="rounded"> D</label></div></div><div class="flex gap-2 pt-2"><button type="submit" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs transition shadow">保存する</button><button type="button" onclick="window.closeEditCarModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2.5 rounded-xl text-xs transition">キャンセル</button></div></form></div></div>
+    <div id="edit-member-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50"><div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4"><h3 class="text-lg font-black text-blue-900">メンバー情報の編集</h3><form onsubmit="window.handleUpdateMember(event)" class="space-y-3"><input type="hidden" id="edit-member-id"><div><label class="block text-xs font-bold text-slate-600 mb-1">氏名</label><input type="text" id="edit-member-name" required class="w-full bg-slate-50 border rounded-lg px-3 py-2 text-sm outline-none font-bold"></div><div><label class="block text-xs font-bold text-slate-600 mb-1">役割</label><select id="edit-member-role" onchange="window.toggleNewMemberRoleOptions(this.value, 'edit')" class="w-full bg-slate-50 border rounded-lg px-3 py-2 text-sm font-bold outline-none"><option value="player">選手</option><option value="parent">保護者</option><option value="staff">スタッフ</option><option value="family">家族</option></select></div><div id="edit-member-sub-container"><label class="block text-xs font-bold text-slate-600 mb-1" id="edit-member-sub-label">学年</label><div id="edit-member-sub-wrapper" class="flex gap-2"></div></div>
+    
+    <div id="edit-member-duties-container" class="bg-slate-50 p-3 rounded-lg border border-slate-200 hidden">
+        <label class="block text-xs font-bold text-slate-700 mb-2">📋 担当可能な役割（保護者・スタッフ用）</label>
+        <div class="flex flex-wrap gap-4">
+            <label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-member-duties" value="当番" class="rounded w-4 h-4 text-blue-600"> 当番</label>
+            <label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-member-duties" value="スコアラー" class="rounded w-4 h-4 text-blue-600"> スコアラー</label>
+            <label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-member-duties" value="球数カウント" class="rounded w-4 h-4 text-blue-600"> 球数カウント</label>
+            <label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-member-duties" value="塁審" class="rounded w-4 h-4 text-blue-600"> 塁審</label>
+        </div>
+    </div>
+
+    <div><label class="block text-xs font-bold text-slate-600 mb-1">所属チーム</label><div class="flex gap-4 bg-slate-50 p-2.5 rounded-lg border"><label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-member-teams" value="A" class="rounded w-4 h-4 text-blue-600"> A</label><label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-member-teams" value="B" class="rounded w-4 h-4 text-blue-600"> B</label><label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-member-teams" value="C" class="rounded w-4 h-4 text-blue-600"> C</label><label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-member-teams" value="D" class="rounded w-4 h-4 text-blue-600"> D</label></div></div><div class="flex gap-4 pt-1"><label class="flex items-center gap-1.5 text-xs font-bold text-blue-700 cursor-pointer bg-blue-50 px-3 py-2 rounded-lg border border-blue-200"><input type="checkbox" id="edit-member-is-selftransport" class="rounded w-4 h-4 text-blue-600"> 基本自車移動</label><label class="flex items-center gap-1.5 text-xs font-bold text-amber-700 cursor-pointer bg-amber-50 px-3 py-2 rounded-lg border border-amber-200"><input type="checkbox" id="edit-member-is-kyubu" class="rounded w-4 h-4 text-amber-600"> 休部にする</label></div><div class="flex gap-2 pt-2"><button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-xs transition shadow">保存する</button><button type="button" onclick="window.closeEditMemberModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2.5 rounded-xl text-xs transition">キャンセル</button></div></form></div></div>
+    <div id="edit-car-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50"><div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto"><h3 class="text-lg font-black text-blue-900">車両マスターの編集（固定メンバー）</h3><form onsubmit="window.handleUpdateMasterCar(event)" class="space-y-3"><input type="hidden" id="edit-car-id"><div><label class="block text-xs font-bold text-slate-600 mb-1">車両名（オーナー名）</label><input type="text" id="edit-car-owner" required class="w-full bg-slate-50 border rounded-lg px-3 py-2 text-sm outline-none font-bold"></div><div><label class="block text-xs font-bold text-slate-600 mb-1">ドライバー</label><select id="edit-car-driver" required class="w-full bg-slate-50 border rounded-lg px-3 py-2 text-sm font-bold outline-none text-slate-700"></select></div><div class="grid grid-cols-2 gap-2"><div><label class="block text-xs font-bold text-slate-600 mb-1">乗車定員</label><select id="edit-car-capacity" onchange="window.renderCarSeatsUI(this.value, 'edit-car-fixed-seats', 'edit')" class="w-full bg-slate-50 border rounded-lg px-2 py-2 text-xs font-bold outline-none"><option value="5">5人乗り</option><option value="7">7人乗り</option><option value="8">8人乗り</option></select></div><div><label class="block text-xs font-bold text-slate-600 mb-1">道具車枠(通常3)</label><input type="number" id="edit-car-gearseats" min="0" max="8" class="w-full bg-slate-50 border rounded-lg px-2 py-2 text-sm font-bold outline-none"></div></div><div class="bg-slate-50 p-3 rounded-lg border border-slate-200 mt-2"><label class="block text-xs font-bold text-slate-600 mb-2">🚗 固定同乗者の事前登録</label><div id="edit-car-fixed-seats" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div></div><div><label class="block text-xs font-bold text-slate-600 mb-1">利用チーム</label><div class="flex gap-4 bg-slate-50 p-2.5 rounded-lg border"><label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-car-teams" value="A" class="rounded w-4 h-4 text-blue-600"> A</label><label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-car-teams" value="B" class="rounded w-4 h-4 text-blue-600"> B</label><label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-car-teams" value="C" class="rounded w-4 h-4 text-blue-600"> C</label><label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-car-teams" value="D" class="rounded w-4 h-4 text-blue-600"> D</label></div></div><div class="flex gap-2 pt-2"><button type="submit" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs transition shadow">保存する</button><button type="button" onclick="window.closeEditCarModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2.5 rounded-xl text-xs transition">キャンセル</button></div></form></div></div>
     <div id="seat-assign-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50"><div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4"><h3 class="text-base font-black text-blue-900">空席へのメンバー割り当て</h3><p id="seat-assign-desc" class="text-xs text-slate-500">割り当てたいメンバーを選択してください：</p><input type="hidden" id="assign-target-car-id"><input type="hidden" id="assign-target-seat-idx"><select id="seat-assign-member-select" class="w-full bg-slate-50 border rounded-xl px-3 py-2 text-sm font-bold text-blue-900 outline-none"></select><div class="flex gap-2 pt-2"><button type="button" onclick="window.confirmSeatAssignment()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-xl text-xs transition shadow">割り当てる</button><button type="button" onclick="window.closeSeatAssignModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2 rounded-xl text-xs transition">キャンセル</button></div></div></div>
     <div id="unassigned-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50"><div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 flex flex-col max-h-[85vh]"><h3 class="text-base font-black text-blue-900 mb-2">未割り当てメンバーのクイック割当</h3><select id="quick-target-member-select" class="w-full bg-slate-50 border rounded-xl px-3 py-2 text-sm font-bold text-blue-900 mb-3 outline-none"></select><div id="quick-assign-cars-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[300px] overflow-y-auto pr-1"></div><button type="button" onclick="window.closeUnassignedModal()" class="mt-4 px-4 py-2 bg-slate-200 text-slate-700 rounded-xl font-bold w-full">閉じる</button></div></div>
     <div id="logo-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50"><div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4"><h3 class="text-lg font-black text-blue-900">ロゴ画像の変更</h3><div><label class="block text-xs font-bold text-slate-600 mb-1">画像をアップロード</label><input type="file" id="logo-file-input" accept="image/*" onchange="window.handleLogoUpload(event)" class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"></div><div><label class="block text-xs font-bold text-slate-600 mb-1">または画像URLを入力</label><input type="text" id="logo-url-input" placeholder="https://example.com/logo.png" class="w-full bg-slate-50 border rounded-xl px-3 py-2 text-sm outline-none"></div><div class="flex gap-2 pt-2"><button type="button" onclick="window.saveLogoUrl()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-xl text-xs transition shadow">保存する</button><button type="button" onclick="window.clearLogo()" class="bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold px-4 py-2 rounded-xl text-xs transition border border-rose-200">ロゴ削除</button><button type="button" onclick="window.closeLogoModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2 rounded-xl text-xs transition">閉じる</button></div></div></div>
     <div id="schedule-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50"><div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6"><h3 class="text-xl font-black text-blue-900 mb-4">新しい活動日の追加</h3><form onsubmit="window.handleCreateSchedule(event)"><div><label class="block text-xs font-bold text-slate-600 mb-1">活動日</label><input type="date" id="new-sched-date" required class="w-full bg-slate-50 border rounded-xl px-3 py-2 text-sm outline-none"></div><div class="mt-4"><label class="block text-xs font-bold text-slate-600 mb-1">行先・大会名</label><input type="text" id="new-sched-desc" required placeholder="例: 〇〇小学校遠征" class="w-full bg-slate-50 border rounded-xl px-3 py-2 text-sm outline-none"></div><div class="flex justify-end gap-3 pt-6"><button type="button" onclick="window.closeScheduleModal()" class="px-4 py-2 text-sm font-bold text-slate-600">キャンセル</button><button type="submit" class="px-5 py-2 bg-emerald-600 text-white rounded-xl text-sm font-bold shadow">追加する</button></div></form></div></div>
     
-    <!-- LINEコピータブ用モーダル -->
     <div id="line-copy-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] flex flex-col">
-            <h3 class="text-lg font-black text-blue-900">LINE出力</h3>
+            <h3 class="text-lg font-black text-blue-900">個別LINE出力</h3>
             
             <div id="line-copy-config-area" class="space-y-4 flex-col flex">
                 <div>
@@ -306,9 +353,58 @@
         </div>
     </div>
 
+    <div id="monthly-duty-line-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] flex flex-col">
+            <h3 class="text-lg font-black text-blue-900">📱 月毎当番LINE出力</h3>
+            <div class="flex flex-col gap-2 flex-1 min-h-[350px]">
+                <label class="block text-xs font-bold text-slate-600">生成された月毎当番テキスト（編集可能）</label>
+                <textarea id="monthly-duty-textarea" class="w-full flex-1 bg-slate-50 border border-slate-300 rounded-lg p-3 text-xs outline-none resize-none shadow-inner leading-relaxed font-mono"></textarea>
+            </div>
+            <div class="flex gap-2 pt-2">
+                <button type="button" onclick="window.copyMonthlyDutyText()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-sm transition shadow">📋 クリップボードにコピー</button>
+                <button type="button" onclick="window.closeMonthlyDutyLineModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2.5 rounded-xl text-xs transition">閉じる</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js";
         import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-database.js";
+
+        // === ユーティリティ関数追加 ===
+        function formatDateWithDay(dateString) {
+            if (!dateString) return '';
+            const d = new Date(dateString);
+            if (isNaN(d)) return dateString.slice(5);
+            const days = ['日', '月', '火', '水', '木', '金', '土'];
+            return `${d.getMonth() + 1}/${d.getDate()}(${days[d.getDay()]})`;
+        }
+
+        function sortParentsStaff(parentsStaff) {
+            const getSortGroup = (m) => {
+                if (m.role === 'parent') {
+                    const duties = m.allowedDuties || ['当番', 'スコアラー', '球数カウント', '塁審'];
+                    return duties.includes('当番') ? 1 : 2;
+                }
+                if (m.role === 'staff') return 3;
+                if (m.role === 'family') return 4;
+                return 5;
+            };
+            parentsStaff.sort((a, b) => {
+                const grpA = getSortGroup(a);
+                const grpB = getSortGroup(b);
+                if (grpA !== grpB) return grpA - grpB;
+                if (grpA === 1 || grpA === 2) {
+                    return (b.grade || '').localeCompare(a.grade || '');
+                } else if (grpA === 3) {
+                    if (a.staffRole === '監督' && b.staffRole !== '監督') return -1;
+                    if (b.staffRole === '監督' && a.staffRole !== '監督') return 1;
+                    return 0;
+                }
+                return 0;
+            });
+        }
+        // ============================
 
         const firebaseConfig = {
             apiKey: "AIzaSyAslbHA8YqDEsbWMhJPWD4Yf_38YA19Ies",
@@ -326,10 +422,10 @@
             currentPublicMonth: '', currentScheduleMonth: '', memberRoleTab: 'player', attendanceSubTab: 'player', logoUrl: '', lastLineCopyUrl: '',
             members: [], masterCars: [],
             teams: {
-                A: { currentScheduleId: '', schedules: [], attendanceData: {}, parentAttendanceData: {}, carAttendanceData: {}, dutyData: {} },
-                B: { currentScheduleId: '', schedules: [], attendanceData: {}, parentAttendanceData: {}, carAttendanceData: {}, dutyData: {} },
-                C: { currentScheduleId: '', schedules: [], attendanceData: {}, parentAttendanceData: {}, carAttendanceData: {}, dutyData: {} },
-                D: { currentScheduleId: '', schedules: [], attendanceData: {}, parentAttendanceData: {}, carAttendanceData: {}, dutyData: {} }
+                A: { currentScheduleId: '', schedules: [], attendanceData: {}, parentAttendanceData: {}, carAttendanceData: {}, dutyData: {}, monthlySettings: {} },
+                B: { currentScheduleId: '', schedules: [], attendanceData: {}, parentAttendanceData: {}, carAttendanceData: {}, dutyData: {}, monthlySettings: {} },
+                C: { currentScheduleId: '', schedules: [], attendanceData: {}, parentAttendanceData: {}, carAttendanceData: {}, dutyData: {}, monthlySettings: {} },
+                D: { currentScheduleId: '', schedules: [], attendanceData: {}, parentAttendanceData: {}, carAttendanceData: {}, dutyData: {}, monthlySettings: {} }
             }
         };
 
@@ -349,10 +445,23 @@
             const data = snapshot.val();
             if (data) {
                 if (!isLocalChange) {
-                    const currentLogo = window.appData.logoUrl;
+                    const localUIState = {
+                        currentTab: window.appData.currentTab,
+                        currentTeam: window.appData.currentTeam,
+                        currentTrip: window.appData.currentTrip,
+                        scheduleSubTab: window.appData.scheduleSubTab,
+                        memberRoleTab: window.appData.memberRoleTab,
+                        attendanceSubTab: window.appData.attendanceSubTab,
+                        currentPublicMonth: window.appData.currentPublicMonth,
+                        currentScheduleMonth: window.appData.currentScheduleMonth
+                    };
+
                     window.appData = data;
-                    if(!window.appData.logoUrl && currentLogo) window.appData.logoUrl = currentLogo;
-                    applyDataIntegrityChecks(); saveToLocalStorage(window.appData);
+                    
+                    Object.assign(window.appData, localUIState);
+
+                    applyDataIntegrityChecks(); 
+                    saveToLocalStorage(window.appData);
                     const st = document.getElementById('sync-status'); if(st) st.textContent = '🟢 リアルタイム同期中（データ保護済）';
                     window.renderApp();
                 }
@@ -380,13 +489,16 @@
             if(!window.appData.teams) window.appData.teams = JSON.parse(JSON.stringify(defaultData.teams));
 
             const invalidChars = /[\.\#\$\[\]]/g;
-            if (window.appData.members) { window.appData.members.forEach(m => { 
-                if (m.id && invalidChars.test(m.id)) m.id = m.id.replace(invalidChars, '_');
-                if (m.isSelfTransport === undefined) m.isSelfTransport = false;
-            }); }
+            if (window.appData.members) { 
+                window.appData.members.forEach(m => { 
+                    if (m.id && invalidChars.test(m.id)) m.id = m.id.replace(invalidChars, '_');
+                    if (m.isSelfTransport === undefined) m.isSelfTransport = false;
+                    if (!m.allowedDuties) m.allowedDuties = ['当番', 'スコアラー', '球数カウント', '塁審'];
+                }); 
+            }
 
             ['A', 'B', 'C', 'D'].forEach(tKey => {
-                if(!window.appData.teams[tKey]) window.appData.teams[tKey] = { currentScheduleId: '', schedules: [], attendanceData: {}, parentAttendanceData: {}, carAttendanceData: {}, dutyData: {} };
+                if(!window.appData.teams[tKey]) window.appData.teams[tKey] = { currentScheduleId: '', schedules: [], attendanceData: {}, parentAttendanceData: {}, carAttendanceData: {}, dutyData: {}, monthlySettings: {} };
                 const team = window.appData.teams[tKey];
                 
                 if(team.schedules) {
@@ -400,11 +512,37 @@
                         }
                     });
                 }
-                if(!team.schedules) team.schedules = []; if(!team.attendanceData) team.attendanceData = {}; if(!team.parentAttendanceData) team.parentAttendanceData = {}; if(!team.carAttendanceData) team.carAttendanceData = {}; if(!team.dutyData) team.dutyData = {};
+                if(!team.schedules) team.schedules = []; if(!team.attendanceData) team.attendanceData = {}; if(!team.parentAttendanceData) team.parentAttendanceData = {}; if(!team.carAttendanceData) team.carAttendanceData = {}; if(!team.dutyData) team.dutyData = {}; if(!team.monthlySettings) team.monthlySettings = {};
+
+                if (team.parentAttendanceData && team.schedules.length > 0) {
+                    Object.keys(team.parentAttendanceData).forEach(schedId => {
+                        const sched = team.schedules.find(s => s.id === schedId);
+                        if (!sched) return;
+                        const rolesToUpdate = sched.dutyRoles || ['当番', 'スコアラー', '球数カウント', '塁審'];
+                        
+                        Object.keys(team.parentAttendanceData[schedId]).forEach(memberName => {
+                            const attStatus = team.parentAttendanceData[schedId][memberName].status;
+                            let dutyVal = '×';
+                            if (attStatus === 'all') dutyVal = '◯';
+                            else if (attStatus === 'am') dutyVal = '午前';
+                            else if (attStatus === 'pm') dutyVal = '午後';
+                            else if (attStatus === 'triangle') dutyVal = '調整中';
+
+                            if(!team.dutyData) team.dutyData = {};
+                            if(!team.dutyData[schedId]) team.dutyData[schedId] = {};
+                            if(!team.dutyData[schedId][memberName]) team.dutyData[schedId][memberName] = { roles: {}, note: '' };
+                            if(!team.dutyData[schedId][memberName].roles) team.dutyData[schedId][memberName].roles = {};
+
+                            rolesToUpdate.forEach(r => {
+                                team.dutyData[schedId][memberName].roles[r] = dutyVal;
+                            });
+                        });
+                    });
+                }
 
                 team.schedules.forEach(sched => {
                     if(!sched.transportMode) sched.transportMode = 'car';
-                    if(!sched.dutyRoles) sched.dutyRoles = ['自転車引率', 'スコアラー', '塁審2名'];
+                    if(!sched.dutyRoles) sched.dutyRoles = ['当番'];
                     if(!sched.dutyAssignments) sched.dutyAssignments = {};
                     ['tripTo', 'tripFrom'].forEach(tKeyName => {
                         if(!sched[tKeyName]) sched[tKeyName] = { cars: [], selfTransport: [], optOut: [], bikeSettings: { leader: '', escorts: [], useConvoy: false, convoyOrder: {} } };
@@ -424,7 +562,7 @@
 
         function getCleanFirebaseData() {
             let clean; try { clean = JSON.parse(JSON.stringify(window.appData)); } catch(e) { clean = JSON.parse(JSON.stringify(defaultData)); }
-            if(clean.logoUrl && clean.logoUrl.length > 500) clean.logoUrl = '';
+            if(clean.logoUrl && clean.logoUrl.length > 2000000) clean.logoUrl = '';
             return clean;
         }
 
@@ -515,7 +653,7 @@
                         team.schedules.push({
                             id: 'sched_' + Date.now() + '_' + Math.floor(Math.random()*10000), 
                             date: dStr, destination: '活動日', transportMode: 'car', 
-                            dutyRoles: ['当番', 'スコアラー'], dutyAssignments: {}, 
+                            dutyRoles: ['当番'], dutyAssignments: {}, 
                             tripTo: { cars: [], selfTransport: [], optOut: [], bikeSettings: { leader: '', escorts: [], useConvoy: false, convoyOrder: {} } }, 
                             tripFrom: { cars: [], selfTransport: [], optOut: [], bikeSettings: { leader: '', escorts: [], useConvoy: false, convoyOrder: {} } }
                         });
@@ -573,7 +711,21 @@
 
         window.openLogoModal = function() { document.getElementById('logo-modal').classList.remove('hidden'); document.getElementById('logo-modal').classList.add('flex'); document.getElementById('logo-url-input').value = window.appData.logoUrl || ''; };
         window.closeLogoModal = function() { document.getElementById('logo-modal').classList.add('hidden'); document.getElementById('logo-modal').classList.remove('flex'); };
-        window.handleLogoUpload = function(event) { const file = event.target.files[0]; if(file) { const reader = new FileReader(); reader.onload = function(e) { document.getElementById('logo-url-input').value = e.target.result; }; reader.readAsDataURL(file); } };
+        window.handleLogoUpload = function(event) { 
+            const file = event.target.files[0]; 
+            if(file) { 
+                if(file.size > 1500000) {
+                    alert('ファイルサイズが大きすぎます。1.5MB以下の画像を選択してください。');
+                    event.target.value = '';
+                    return;
+                }
+                const reader = new FileReader(); 
+                reader.onload = function(e) { 
+                    document.getElementById('logo-url-input').value = e.target.result; 
+                }; 
+                reader.readAsDataURL(file); 
+            } 
+        };
         window.saveLogoUrl = function() { window.appData.logoUrl = document.getElementById('logo-url-input').value.trim(); window.closeLogoModal(); window.triggerUpdate(); };
         window.clearLogo = function() { window.appData.logoUrl = ''; document.getElementById('logo-url-input').value = ''; window.closeLogoModal(); window.triggerUpdate(); };
         window.switchTab = function(tabName) { window.appData.currentTab = tabName; window.renderApp(); };
@@ -581,12 +733,11 @@
         window.switchScheduleSubTab = function(subTab) { window.appData.scheduleSubTab = subTab; window.renderApp(); };
 
         window.renderApp = function() {
-            const body = document.body;
-            const prevHeight = body.style.height;
-            const winScrollX = window.scrollX;
-            const winScrollY = window.scrollY;
+            const prevHeight = document.documentElement.scrollHeight;
+            const winScrollX = window.scrollX || document.documentElement.scrollLeft;
+            const winScrollY = window.scrollY || document.documentElement.scrollTop;
             
-            body.style.height = body.scrollHeight + 'px';
+            document.body.style.minHeight = prevHeight + 'px';
 
             const scrolls = new Map();
             document.querySelectorAll('.overflow-auto, .overflow-y-auto').forEach((el, i) => {
@@ -594,48 +745,69 @@
                 else scrolls.set('scroll_'+i, el.scrollTop);
             });
 
-            const logoImg = document.getElementById('header-logo-img'); if(!logoImg) return;
-            const currentTab = window.appData.currentTab || 'members'; const currentTeamKey = window.appData.currentTeam || 'A';
-            const logoPh = document.getElementById('header-logo-placeholder');
-            if(window.appData.logoUrl) { logoImg.src = window.appData.logoUrl; logoImg.classList.remove('hidden'); logoPh.classList.add('hidden'); }
-            else { logoImg.src = ''; logoImg.classList.add('hidden'); logoPh.classList.remove('hidden'); }
+            const logoImg = document.getElementById('header-logo-img'); 
+            if(logoImg) {
+                const currentTab = window.appData.currentTab || 'members'; const currentTeamKey = window.appData.currentTeam || 'A';
+                const logoPh = document.getElementById('header-logo-placeholder');
+                if(window.appData.logoUrl) { logoImg.src = window.appData.logoUrl; logoImg.classList.remove('hidden'); logoPh.classList.add('hidden'); }
+                else { logoImg.src = ''; logoImg.classList.add('hidden'); logoPh.classList.remove('hidden'); }
 
-            document.querySelectorAll('.team-tab').forEach(btn => {
-                if(btn.dataset.team === currentTeamKey) btn.className = "team-tab px-3 py-1.5 rounded-lg text-xs font-bold transition bg-blue-600 text-white shadow text-center";
-                else btn.className = "team-tab px-3 py-1.5 rounded-lg text-xs font-bold transition text-blue-200 hover:text-white text-center";
-            });
+                document.querySelectorAll('.team-tab').forEach(btn => {
+                    if(btn.dataset.team === currentTeamKey) btn.className = "team-tab px-3 py-1.5 rounded-lg text-xs font-bold transition bg-blue-600 text-white shadow text-center";
+                    else btn.className = "team-tab px-3 py-1.5 rounded-lg text-xs font-bold transition text-blue-200 hover:text-white text-center";
+                });
 
-            ['members', 'attendance', 'schedule'].forEach(t => {
-                const el = document.getElementById(`tab-content-${t}`); const navBtn = document.getElementById(`nav-tab-${t}`);
-                if(el && navBtn) {
-                    if(t === currentTab) { el.classList.remove('hidden'); navBtn.className = "flex-1 sm:flex-initial px-4 py-2.5 rounded-xl font-black text-xs sm:text-sm transition flex items-center justify-center gap-2 bg-blue-600 text-white shadow"; }
-                    else { el.classList.add('hidden'); navBtn.className = "flex-1 sm:flex-initial px-4 py-2.5 rounded-xl font-black text-xs sm:text-sm transition flex items-center justify-center gap-2 bg-slate-100 text-slate-600 hover:bg-slate-200"; }
-                }
-            });
+                ['members', 'attendance', 'schedule'].forEach(t => {
+                    const el = document.getElementById(`tab-content-${t}`); const navBtn = document.getElementById(`nav-tab-${t}`);
+                    if(el && navBtn) {
+                        if(t === currentTab) { el.classList.remove('hidden'); navBtn.className = "flex-1 sm:flex-initial px-4 py-2.5 rounded-xl font-black text-xs sm:text-sm transition flex items-center justify-center gap-2 bg-blue-600 text-white shadow"; }
+                        else { el.classList.add('hidden'); navBtn.className = "flex-1 sm:flex-initial px-4 py-2.5 rounded-xl font-black text-xs sm:text-sm transition flex items-center justify-center gap-2 bg-slate-100 text-slate-600 hover:bg-slate-200"; }
+                    }
+                });
 
-            if(currentTab === 'members') renderMembersTab();
-            else if(currentTab === 'attendance') renderAttendanceTab();
-            else if(currentTab === 'schedule') renderScheduleTab();
+                if(currentTab === 'members') renderMembersTab();
+                else if(currentTab === 'attendance') renderAttendanceTab();
+                else if(currentTab === 'schedule') renderScheduleTab();
+            }
 
             document.querySelectorAll('.overflow-auto, .overflow-y-auto').forEach((el, i) => {
                 if(el.id && scrolls.has(el.id)) el.scrollTop = scrolls.get(el.id);
                 else if(scrolls.has('scroll_'+i)) el.scrollTop = scrolls.get('scroll_'+i);
             });
 
-            requestAnimationFrame(() => {
-                body.style.height = prevHeight;
+            setTimeout(() => {
                 window.scrollTo(winScrollX, winScrollY);
-            });
+                document.body.style.minHeight = '';
+            }, 0);
         };
 
         window.toggleNewMemberRoleOptions = function(role, mode = 'new') {
             const prefix = mode === 'edit' ? 'edit-member' : 'new-member'; const subLabel = document.getElementById(`${prefix}-sub-label`); const subWrapper = document.getElementById(`${prefix}-sub-wrapper`);
+            const dutiesContainer = document.getElementById(`${prefix}-duties-container`);
+            
             subWrapper.innerHTML = '';
-            if(role === 'player') { subLabel.textContent = '学年'; subWrapper.innerHTML = `<select id="${prefix}-sub" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-bold text-slate-700 outline-none"><option value="6">6年</option><option value="5" selected>5年</option><option value="4">4年</option><option value="3">3年</option><option value="2">2年</option><option value="1">1年</option></select>`; }
-            else if(role === 'parent') { subLabel.textContent = '学年 ＆ 続柄（父・母）'; subWrapper.innerHTML = `<select id="${prefix}-sub" class="w-1/2 bg-white border border-slate-300 rounded-lg px-2 py-2 text-sm font-bold text-slate-700 outline-none"><option value="6">6年</option><option value="5" selected>5年</option><option value="4">4年</option><option value="3">3年</option><option value="2">2年</option><option value="1">1年</option></select><select id="${prefix}-parent-type" class="w-1/2 bg-white border border-slate-300 rounded-lg px-2 py-2 text-sm font-bold text-slate-700 outline-none"><option value="父">父</option><option value="母" selected>母</option></select>`; }
-            else if(role === 'staff') { subLabel.textContent = 'スタッフ種別'; subWrapper.innerHTML = `<select id="${prefix}-sub" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-bold text-slate-700 outline-none"><option value="監督">監督</option><option value="コーチ" selected>コーチ</option></select>`; }
-            else { subLabel.textContent = '-'; subWrapper.innerHTML = `<input type="hidden" id="${prefix}-sub" value="-">`; }
+            if(role === 'player') { 
+                subLabel.textContent = '学年'; 
+                subWrapper.innerHTML = `<select id="${prefix}-sub" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-bold text-slate-700 outline-none"><option value="6">6年</option><option value="5" selected>5年</option><option value="4">4年</option><option value="3">3年</option><option value="2">2年</option><option value="1">1年</option></select>`; 
+                if(dutiesContainer) dutiesContainer.classList.add('hidden');
+            }
+            else if(role === 'parent') { 
+                subLabel.textContent = '学年 ＆ 続柄（父・母）'; 
+                subWrapper.innerHTML = `<select id="${prefix}-sub" class="w-1/2 bg-white border border-slate-300 rounded-lg px-2 py-2 text-sm font-bold text-slate-700 outline-none"><option value="6">6年</option><option value="5" selected>5年</option><option value="4">4年</option><option value="3">3年</option><option value="2">2年</option><option value="1">1年</option></select><select id="${prefix}-parent-type" class="w-1/2 bg-white border border-slate-300 rounded-lg px-2 py-2 text-sm font-bold text-slate-700 outline-none"><option value="父">父</option><option value="母" selected>母</option></select>`; 
+                if(dutiesContainer) dutiesContainer.classList.remove('hidden');
+            }
+            else if(role === 'staff') { 
+                subLabel.textContent = 'スタッフ種別'; 
+                subWrapper.innerHTML = `<select id="${prefix}-sub" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-bold text-slate-700 outline-none"><option value="監督">監督</option><option value="コーチ" selected>コーチ</option></select>`; 
+                if(dutiesContainer) dutiesContainer.classList.remove('hidden');
+            }
+            else { 
+                subLabel.textContent = '-'; 
+                subWrapper.innerHTML = `<input type="hidden" id="${prefix}-sub" value="-">`; 
+                if(dutiesContainer) dutiesContainer.classList.add('hidden');
+            }
         };
+
         window.switchMemberRoleTab = function(role) { window.appData.memberRoleTab = role; ['player', 'parent', 'staff', 'family'].forEach(r => { const btn = document.getElementById(`db-role-tab-${r}`); if(btn) btn.className = (r === role) ? "py-2 rounded-lg transition shadow bg-blue-600 text-white" : "py-2 rounded-lg transition text-slate-600 hover:text-slate-900"; }); renderMembersTab(); };
 
         window.addMember = function(event) {
@@ -644,12 +816,19 @@
             const isKyubu = document.getElementById('new-member-is-kyubu').checked; 
             const isSelfTransport = document.getElementById('new-member-is-selftransport').checked;
             const checkedTeams = Array.from(document.querySelectorAll('input[name="new-member-teams"]:checked')).map(cb => cb.value);
+            
+            // 空配列がFirebaseで消える対策
+            let allowedDuties = Array.from(document.querySelectorAll('input[name="new-member-duties"]:checked')).map(cb => cb.value);
+            if(allowedDuties.length === 0) allowedDuties = ['NONE'];
+
             if(!name) return; if(checkedTeams.length === 0) { alert('所属チームを少なくとも1つ選択してください'); return; }
             if(!window.appData.members) window.appData.members = [];
-            window.appData.members.push({ id: 'mem_' + Date.now() + '_' + Math.floor(Math.random()*10000), name: name, role: role, grade: role === 'player' || role === 'parent' ? sub : '-', parentType: role === 'parent' ? parentType : '-', staffRole: role === 'staff' ? sub : '-', teams: checkedTeams, isKyubu: isKyubu, isSelfTransport: isSelfTransport, attendance: 'all' });
+            window.appData.members.push({ id: 'mem_' + Date.now() + '_' + Math.floor(Math.random()*10000), name: name, role: role, grade: role === 'player' || role === 'parent' ? sub : '-', parentType: role === 'parent' ? parentType : '-', staffRole: role === 'staff' ? sub : '-', teams: checkedTeams, isKyubu: isKyubu, isSelfTransport: isSelfTransport, allowedDuties: allowedDuties, attendance: 'all' });
             document.getElementById('new-member-name').value = ''; document.getElementById('new-member-is-kyubu').checked = false; document.getElementById('new-member-is-selftransport').checked = false; window.triggerUpdate();
         };
+
         window.removeMember = function(id) { if(!confirm('このメンバーを削除しますか？')) return; window.appData.members = window.appData.members.filter(m => m.id !== id); window.triggerUpdate(); };
+
         window.openEditMemberModal = function(id) {
             const member = (window.appData.members || []).find(m => m.id === id); if(!member) return;
             document.getElementById('edit-member-id').value = member.id; document.getElementById('edit-member-name').value = member.name; document.getElementById('edit-member-role').value = member.role; 
@@ -659,18 +838,31 @@
             const subSelect = document.getElementById('edit-member-sub'); if(subSelect && (member.role === 'player' || member.role === 'parent')) subSelect.value = member.grade; else if(subSelect && member.role === 'staff') subSelect.value = member.staffRole;
             const parentTypeEl = document.getElementById('edit-member-parent-type'); if(parentTypeEl && member.role === 'parent') parentTypeEl.value = member.parentType || '母';
             document.querySelectorAll('input[name="edit-member-teams"]').forEach(cb => { cb.checked = (member.teams || []).includes(cb.value); });
+            
+            // NONEを解釈してチェックボックスに反映
+            let currentDuties = member.allowedDuties || ['当番', 'スコアラー', '球数カウント', '塁審'];
+            if(currentDuties.length === 1 && currentDuties[0] === 'NONE') currentDuties = [];
+            document.querySelectorAll('input[name="edit-member-duties"]').forEach(cb => { cb.checked = currentDuties.includes(cb.value); });
+            
             document.getElementById('edit-member-modal').classList.remove('hidden'); document.getElementById('edit-member-modal').classList.add('flex');
         };
+
         window.closeEditMemberModal = function() { document.getElementById('edit-member-modal').classList.add('hidden'); document.getElementById('edit-member-modal').classList.remove('flex'); };
+
         window.handleUpdateMember = function(event) {
             event.preventDefault(); const id = document.getElementById('edit-member-id').value; const name = document.getElementById('edit-member-name').value.trim(); const role = document.getElementById('edit-member-role').value;
             const sub = document.getElementById('edit-member-sub') ? document.getElementById('edit-member-sub').value : '-'; const parentType = document.getElementById('edit-member-parent-type') ? document.getElementById('edit-member-parent-type').value : '-';
             const isKyubu = document.getElementById('edit-member-is-kyubu').checked; 
             const isSelfTransport = document.getElementById('edit-member-is-selftransport').checked;
             const checkedTeams = Array.from(document.querySelectorAll('input[name="edit-member-teams"]:checked')).map(cb => cb.value);
+            
+            // 空配列がFirebaseで消える対策
+            let allowedDuties = Array.from(document.querySelectorAll('input[name="edit-member-duties"]:checked')).map(cb => cb.value);
+            if(allowedDuties.length === 0) allowedDuties = ['NONE'];
+
             if(!name) return; if(checkedTeams.length === 0) { alert('所属チームを少なくとも1つ選択してください'); return; }
             const member = (window.appData.members || []).find(m => m.id === id);
-            if(member) { member.name = name; member.role = role; member.grade = role === 'player' || role === 'parent' ? sub : '-'; member.parentType = role === 'parent' ? parentType : '-'; member.staffRole = role === 'staff' ? sub : '-'; member.teams = checkedTeams; member.isKyubu = isKyubu; member.isSelfTransport = isSelfTransport; }
+            if(member) { member.name = name; member.role = role; member.grade = role === 'player' || role === 'parent' ? sub : '-'; member.parentType = role === 'parent' ? parentType : '-'; member.staffRole = role === 'staff' ? sub : '-'; member.teams = checkedTeams; member.isKyubu = isKyubu; member.isSelfTransport = isSelfTransport; member.allowedDuties = allowedDuties; }
             window.closeEditMemberModal(); window.triggerUpdate();
         };
 
@@ -763,8 +955,19 @@
                         else badges.push('<span class="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-bold">在籍</span>');
                         if (m.isSelfTransport) badges.push('<span class="bg-blue-100 text-blue-800 text-[10px] px-2 py-0.5 rounded-full font-bold">自車</span>');
 
+                        let dutiesStr = '';
+                        if (m.role === 'parent' || m.role === 'staff') {
+                            let duties = m.allowedDuties || ['当番', 'スコアラー', '球数カウント', '塁審'];
+                            if(duties.length === 1 && duties[0] === 'NONE') duties = [];
+                            if(duties.length > 0) {
+                                dutiesStr = `<div class="text-[10px] text-indigo-600 mt-1">可能: ${duties.join(', ')}</div>`;
+                            } else {
+                                dutiesStr = `<div class="text-[10px] text-slate-400 mt-1">可能: なし</div>`;
+                            }
+                        }
+
                         card.className = `border rounded-xl p-3 flex items-center justify-between shadow-sm ${m.isKyubu ? 'bg-amber-50/50 border-amber-200 opacity-75' : 'bg-white border-slate-200'}`;
-                        card.innerHTML = `<div><div class="flex items-center gap-1.5"><span class="font-extrabold text-slate-900 text-sm">${m.name}</span>${badges.join('')}</div><div class="text-[11px] text-slate-500 mt-0.5">所属: ${(m.teams||[]).join(', ')}チーム</div></div><div class="flex items-center gap-1"><button type="button" onclick="window.openEditMemberModal('${m.id}')" class="bg-blue-50 text-blue-600 hover:bg-blue-100 p-1.5 rounded-lg text-xs font-bold transition">編集</button><button type="button" onclick="window.removeMember('${m.id}')" class="text-rose-500 hover:bg-rose-50 p-1.5 rounded-lg text-xs font-bold transition">削除</button></div>`;
+                        card.innerHTML = `<div><div class="flex items-center gap-1.5"><span class="font-extrabold text-slate-900 text-sm">${m.name}</span>${badges.join('')}</div><div class="text-[11px] text-slate-500 mt-0.5">所属: ${(m.teams||[]).join(', ')}チーム</div>${dutiesStr}</div><div class="flex items-center gap-1"><button type="button" onclick="window.openEditMemberModal('${m.id}')" class="bg-blue-50 text-blue-600 hover:bg-blue-100 p-1.5 rounded-lg text-xs font-bold transition">編集</button><button type="button" onclick="window.removeMember('${m.id}')" class="text-rose-500 hover:bg-rose-50 p-1.5 rounded-lg text-xs font-bold transition">削除</button></div>`;
                         grid.appendChild(card);
                     });
                     section.appendChild(grid); 
@@ -795,6 +998,15 @@
         window.switchAttendanceMonth = function(mKey) { window.appData.currentPublicMonth = mKey; renderAttendanceTab(); };
         window.switchAttendanceSubTab = function(subTab) { window.appData.attendanceSubTab = subTab; renderAttendanceTab(); };
         
+        window.updateMonthlySetting = function(field, val) {
+            const team = window.appData.teams[window.appData.currentTeam];
+            const currentMonth = window.appData.currentPublicMonth;
+            if(!team.monthlySettings) team.monthlySettings = {};
+            if(!team.monthlySettings[currentMonth]) team.monthlySettings[currentMonth] = { deadline: '', notes: '' };
+            team.monthlySettings[currentMonth][field] = val;
+            window.saveDataOnly();
+        };
+
         window.updateAttendanceCell = function(memberName, schedId, field, val, type = 'player') { 
             const team = window.appData.teams[window.appData.currentTeam]; 
             const dataStore = type === 'parent' ? 'parentAttendanceData' : 'attendanceData'; 
@@ -802,7 +1014,31 @@
             if(!team[dataStore][schedId]) team[dataStore][schedId] = {}; 
             if(!team[dataStore][schedId][memberName]) team[dataStore][schedId][memberName] = { status: type === 'player' ? 'all' : 'absent', note: '' }; 
             team[dataStore][schedId][memberName][field] = val; 
+
+            if (type === 'parent' && field === 'status') {
+                if(!team.dutyData) team.dutyData = {};
+                if(!team.dutyData[schedId]) team.dutyData[schedId] = {};
+                if(!team.dutyData[schedId][memberName]) team.dutyData[schedId][memberName] = { roles: {}, note: '' };
+                if(!team.dutyData[schedId][memberName].roles) team.dutyData[schedId][memberName].roles = {};
+                
+                let dutyVal = '×';
+                if (val === 'all') dutyVal = '◯';
+                else if (val === 'am') dutyVal = '午前';
+                else if (val === 'pm') dutyVal = '午後';
+                else if (val === 'triangle') dutyVal = '調整中';
+                
+                const sched = team.schedules.find(s => s.id === schedId);
+                const rolesToUpdate = sched ? (sched.dutyRoles || ['当番']) : ['当番', 'スコアラー', '球数カウント', '塁審'];
+                rolesToUpdate.forEach(r => {
+                    team.dutyData[schedId][memberName].roles[r] = dutyVal;
+                });
+            }
+            
             window.saveDataOnly(); 
+            
+            if (type === 'parent') {
+                window.renderParentDutyTable();
+            }
         };
         
         window.updateDutyCell = function(memberName, schedId, roleName, val) { 
@@ -846,7 +1082,105 @@
             window.saveDataOnly(); 
         };
 
+        window.renderParentDutyTable = function() {
+            const team = window.appData.teams[window.appData.currentTeam]; 
+            const currentTeamKey = window.appData.currentTeam;
+            const dutyTableEl = document.getElementById('attendance-duty-table');
+            if(!team || !dutyTableEl) return;
+
+            const scrollTop = dutyTableEl.scrollTop;
+            const scrollLeft = dutyTableEl.scrollLeft;
+
+            const targetAllSchedules = (team.schedules || []);
+            let monthlyGroups = {}; 
+            targetAllSchedules.forEach(s => { 
+                if(s.date && s.date.length >= 7) { 
+                    const mKey = s.date.slice(0, 7); 
+                    if(!monthlyGroups[mKey]) monthlyGroups[mKey] = []; 
+                    monthlyGroups[mKey].push(s); 
+                } 
+            });
+            const currentMonth = window.appData.currentPublicMonth; 
+            const targetSchedules = monthlyGroups[currentMonth] || [];
+
+            const teamMembers = (window.appData.members || []).filter(m => m.teams && m.teams.includes(currentTeamKey) && !m.isKyubu);
+            let parentsStaff = teamMembers.filter(m => m.role === 'parent' || m.role === 'staff' || m.role === 'family');
+            
+            sortParentsStaff(parentsStaff);
+
+            let dutyParentsStaff = parentsStaff;
+
+            if(dutyParentsStaff.length === 0) { 
+                dutyTableEl.innerHTML = '<div class="text-xs text-slate-400 text-center py-4">該当メンバーがいません</div>'; 
+            } else {
+                let html = '<table class="w-full text-left border-collapse text-xs bg-white"><thead><tr class="bg-slate-100 text-slate-700 border-b"><th class="p-2.5 font-black sticky left-0 top-0 z-30 bg-slate-100 shadow-sm whitespace-nowrap">氏名</th>';
+                targetSchedules.forEach(s => { html += `<th class="p-2.5 font-bold text-center whitespace-nowrap sticky top-0 z-20 bg-slate-100 border-l">${formatDateWithDay(s.date)}<br><span class="text-[10px] text-blue-600 font-normal">${s.destination || ''}</span></th>`; });
+                html += '<th class="p-2.5 font-bold text-center sticky top-0 z-20 bg-slate-200 border-l">備考</th></tr></thead><tbody class="divide-y divide-slate-100">';
+                
+                dutyParentsStaff.forEach(m => {
+                    const labelStr = m.role === 'staff' ? `スタッフ (${m.staffRole})` : (m.role === 'parent' ? `保護者 (${m.grade}年・${m.parentType})` : m.role);
+                    let hasAnyAttendance = targetSchedules.some(s => { const attEntry = team.parentAttendanceData && team.parentAttendanceData[s.id] && team.parentAttendanceData[s.id][m.name]; return attEntry && attEntry.status !== 'absent'; });
+                    if(!hasAnyAttendance) return;
+                    
+                    html += `<tr class="hover:bg-slate-50"><td class="p-2.5 font-extrabold text-slate-900 sticky left-0 z-10 bg-white shadow-sm whitespace-nowrap">${m.name}<br><span class="text-[10px] text-slate-500 font-normal">${labelStr}</span></td>`;
+                    
+                    targetSchedules.forEach(s => {
+                        const attEntry = team.parentAttendanceData && team.parentAttendanceData[s.id] && team.parentAttendanceData[s.id][m.name];
+                        const isAbsent = !attEntry || attEntry.status === 'absent';
+                        const attStatus = attEntry ? attEntry.status : 'absent';
+                        
+                        if(isAbsent) { 
+                            html += `<td class="p-2 text-center align-middle border-l text-slate-400 bg-slate-100/50">欠席のため不可</td>`; 
+                        } else {
+                            if(!team.dutyData[s.id]) team.dutyData[s.id] = {}; if(!team.dutyData[s.id][m.name]) team.dutyData[s.id][m.name] = { roles: {}, note: '' };
+                            const entry = team.dutyData[s.id][m.name]; if(!entry.roles) entry.roles = {};
+                            
+                            const schedRoles = s.dutyRoles || ['当番'];
+                            
+                            const allowed = schedRoles.filter(r => {
+                                const standardRoles = ['当番', 'スコアラー', '球数カウント', '塁審'];
+                                if (!standardRoles.includes(r)) return true;
+                                let memDuties = m.allowedDuties || standardRoles;
+                                if(memDuties.length === 1 && memDuties[0] === 'NONE') memDuties = [];
+                                return memDuties.includes(r);
+                            });
+                            
+                            html += `<td class="p-2 text-center align-middle border-l"><div class="flex flex-col gap-2 py-1 items-center">`;
+                            
+                            let attBadge = '';
+                            if(attStatus === 'am') attBadge = '<span class="text-[10px] text-indigo-600 font-bold mb-1">※出欠: 午前</span>';
+                            else if(attStatus === 'pm') attBadge = '<span class="text-[10px] text-purple-600 font-bold mb-1">※出欠: 午後</span>';
+                            else if(attStatus === 'triangle') attBadge = '<span class="text-[10px] text-amber-600 font-bold mb-1">※出欠: 調整中</span>';
+                            if(attBadge) html += attBadge;
+
+                            allowed.forEach(roleName => {
+                                if(!entry.roles[roleName]) entry.roles[roleName] = '×';
+                                const curVal = entry.roles[roleName] || '×';
+                                html += `<div class="bg-slate-50 border rounded-lg p-1.5 flex flex-col gap-1 text-[11px] shadow-sm w-28"><span class="font-extrabold text-slate-700 truncate">${roleName}</span><select onchange="window.updateDutyCell('${m.name}', '${s.id}', '${roleName}', this.value)" class="bg-white border rounded px-1.5 py-1 font-bold outline-none text-center text-xs"><option value="×" ${curVal==='×'?'selected':''}>✕ 不可</option><option value="◯" ${curVal==='◯'?'selected':''}>〇 可能</option><option value="午前" ${curVal==='午前'?'selected':''}>△ 午前</option><option value="午後" ${curVal==='午後'?'selected':''}>▲ 午後</option><option value="調整中" ${curVal==='調整中'?'selected':''}>調整中</option></select></div>`;
+                            });
+                            html += `</div></td>`;
+                        }
+                    });
+                    const lastSchedId = targetSchedules.length > 0 ? targetSchedules[targetSchedules.length - 1].id : '';
+                    const noteVal = (lastSchedId && team.dutyData[lastSchedId] && team.dutyData[lastSchedId][m.name]) ? (team.dutyData[lastSchedId][m.name].note || '') : '';
+                    html += `<td class="p-2.5 bg-slate-50/50 text-center border-l"><input type="text" value="${noteVal}" onchange="window.updateNoteCell('${m.name}', '${lastSchedId}', 'parent', this.value)" placeholder="自由意見..." class="w-32 bg-white border rounded px-2 py-1 text-xs outline-none"></td></tr>`;
+                });
+                html += '</tbody></table>'; dutyTableEl.innerHTML = html;
+            }
+
+            setTimeout(() => {
+                dutyTableEl.scrollTop = scrollTop;
+                dutyTableEl.scrollLeft = scrollLeft;
+            }, 0);
+        };
+
         function renderAttendanceTab() {
+            const scrolls = new Map();
+            document.querySelectorAll('#tab-content-attendance .overflow-auto').forEach((el, i) => {
+                if(el.id) scrolls.set(el.id, el.scrollTop);
+                else scrolls.set('att_scroll_'+i, el.scrollTop);
+            });
+
             const team = window.appData.teams[window.appData.currentTeam]; const currentTeamKey = window.appData.currentTeam;
             ['player', 'parent', 'car'].forEach(st => {
                 const btn = document.getElementById(`att-subtab-${st}`); const content = document.getElementById(`att-content-${st}`);
@@ -876,20 +1210,7 @@
             const teamMembers = (window.appData.members || []).filter(m => m.teams && m.teams.includes(currentTeamKey) && !m.isKyubu);
             let parentsStaff = teamMembers.filter(m => m.role === 'parent' || m.role === 'staff' || m.role === 'family');
             
-            parentsStaff.sort((a, b) => {
-                const roleOrder = { 'staff': 1, 'parent': 2, 'family': 3 };
-                const rA = roleOrder[a.role] || 4;
-                const rB = roleOrder[b.role] || 4;
-                if (rA !== rB) return rA - rB;
-                if (a.role === 'staff') {
-                    if (a.staffRole === '監督' && b.staffRole !== '監督') return -1;
-                    if (b.staffRole === '監督' && a.staffRole !== '監督') return 1;
-                    return 0; 
-                } else if (a.role === 'parent') {
-                    return (b.grade || '').localeCompare(a.grade || '');
-                }
-                return 0;
-            });
+            sortParentsStaff(parentsStaff);
 
             if(playerContainerEl) {
                 playerContainerEl.innerHTML = '';
@@ -897,15 +1218,15 @@
                     let gradePlayers = teamMembers.filter(m => m.role === 'player' && m.grade === grade); if(gradePlayers.length === 0) return;
                     const card = document.createElement('div'); card.className = "bg-slate-50 border border-slate-200 rounded-xl p-3";
                     card.innerHTML = `<h4 class="text-xs font-black text-blue-900 mb-2">⚾ ${grade}年生</h4>`;
-                    let pHtml = '<div class="overflow-auto max-h-[500px] border rounded-xl shadow-inner"><table class="w-full text-left border-collapse text-xs bg-white"><thead><tr class="bg-slate-100 border-b text-slate-700"><th class="p-2.5 font-black sticky left-0 top-0 z-30 bg-slate-100 shadow-sm whitespace-nowrap">選手名</th>';
-                    targetSchedules.forEach(s => { pHtml += `<th class="p-2.5 text-center whitespace-nowrap sticky top-0 z-20 bg-slate-100 border-l">${s.date.slice(5)}</th>`; });
+                    let pHtml = `<div id="att-scroll-player-${grade}" class="overflow-auto max-h-[500px] border rounded-xl shadow-inner"><table class="w-full text-left border-collapse text-xs bg-white"><thead><tr class="bg-slate-100 border-b text-slate-700"><th class="p-2.5 font-black sticky left-0 top-0 z-30 bg-slate-100 shadow-sm whitespace-nowrap">選手名</th>`;
+                    targetSchedules.forEach(s => { pHtml += `<th class="p-2.5 text-center whitespace-nowrap sticky top-0 z-20 bg-slate-100 border-l">${formatDateWithDay(s.date)}</th>`; });
                     pHtml += '<th class="p-2.5 text-center sticky top-0 z-20 bg-slate-200 border-l font-bold">備考</th></tr></thead><tbody class="bg-white divide-y">';
                     gradePlayers.forEach(m => {
                         pHtml += `<tr><td class="p-2.5 font-bold sticky left-0 z-10 bg-white shadow-sm whitespace-nowrap">${m.name}</td>`;
                         targetSchedules.forEach(s => {
                             if(!team.attendanceData[s.id]) team.attendanceData[s.id] = {}; if(!team.attendanceData[s.id][m.name]) team.attendanceData[s.id][m.name] = { status: 'all', note: '' };
                             const curStatus = team.attendanceData[s.id][m.name].status || 'all';
-                            pHtml += `<td class="p-2 text-center border-l"><select onchange="window.updateAttendanceCell('${m.name}', '${s.id}', 'status', this.value, 'player')" class="bg-slate-50 border rounded px-2 py-1.5 text-xs font-bold outline-none shadow-sm"><option value="all" ${curStatus==='all'?'selected':''}>〇 出席</option><option value="absent" ${curStatus==='absent'?'selected':''}>× 欠席</option><option value="am" ${curStatus==='am'?'selected':''}>午前</option><option value="pm" ${curStatus==='pm'?'selected':''}>午後</option></select></td>`;
+                            pHtml += `<td class="p-2 text-center border-l"><select onchange="window.updateAttendanceCell('${m.name}', '${s.id}', 'status', this.value, 'player')" class="bg-slate-50 border rounded px-2 py-1.5 text-xs font-bold outline-none shadow-sm"><option value="all" ${curStatus==='all'?'selected':''}>〇 出席</option><option value="absent" ${curStatus==='absent'?'selected':''}>× 欠席</option><option value="am" ${curStatus==='am'?'selected':''}>△ 午前</option><option value="pm" ${curStatus==='pm'?'selected':''}>▲ 午後</option><option value="triangle" ${curStatus==='triangle'?'selected':''}>調整中</option></select></td>`;
                         });
                         const lastSchedId = targetSchedules.length > 0 ? targetSchedules[targetSchedules.length - 1].id : '';
                         const noteVal = (lastSchedId && team.attendanceData[lastSchedId] && team.attendanceData[lastSchedId][m.name]) ? (team.attendanceData[lastSchedId][m.name].note || '') : '';
@@ -916,8 +1237,8 @@
             }
 
             if(parentContainerEl) {
-                let pHtml = '<div class="overflow-auto max-h-[500px] border rounded-xl shadow-inner"><table class="w-full text-left border-collapse text-xs bg-white"><thead><tr class="bg-slate-100 border-b text-slate-700"><th class="p-2.5 font-black sticky left-0 top-0 z-30 bg-slate-100 shadow-sm whitespace-nowrap">保護者・スタッフ名</th>';
-                targetSchedules.forEach(s => { pHtml += `<th class="p-2.5 text-center whitespace-nowrap sticky top-0 z-20 bg-slate-100 border-l">${s.date.slice(5)}</th>`; });
+                let pHtml = '<div id="att-scroll-parent-list" class="overflow-auto max-h-[500px] border rounded-xl shadow-inner"><table class="w-full text-left border-collapse text-xs bg-white"><thead><tr class="bg-slate-100 border-b text-slate-700"><th class="p-2.5 font-black sticky left-0 top-0 z-30 bg-slate-100 shadow-sm whitespace-nowrap">保護者・スタッフ名</th>';
+                targetSchedules.forEach(s => { pHtml += `<th class="p-2.5 text-center whitespace-nowrap sticky top-0 z-20 bg-slate-100 border-l">${formatDateWithDay(s.date)}</th>`; });
                 pHtml += '<th class="p-2.5 text-center sticky top-0 z-20 bg-slate-200 border-l font-bold">備考</th></tr></thead><tbody class="bg-white divide-y">';
                 parentsStaff.forEach(m => {
                     const labelStr = m.role === 'staff' ? `スタッフ (${m.staffRole})` : (m.role === 'parent' ? `保護者 (${m.grade}年・${m.parentType})` : m.role);
@@ -925,84 +1246,57 @@
                     targetSchedules.forEach(s => {
                         if(!team.parentAttendanceData) team.parentAttendanceData = {}; if(!team.parentAttendanceData[s.id]) team.parentAttendanceData[s.id] = {}; if(!team.parentAttendanceData[s.id][m.name]) team.parentAttendanceData[s.id][m.name] = { status: 'absent', note: '' };
                         const curStatus = team.parentAttendanceData[s.id][m.name].status || 'absent';
-                        pHtml += `<td class="p-2 text-center border-l"><select onchange="window.updateAttendanceCell('${m.name}', '${s.id}', 'status', this.value, 'parent')" class="bg-slate-50 border rounded px-2 py-1.5 text-xs font-bold outline-none shadow-sm"><option value="absent" ${curStatus==='absent'?'selected':''}>× 欠席</option><option value="all" ${curStatus==='all'?'selected':''}>〇 出席</option><option value="triangle" ${curStatus==='triangle' || curStatus==='am' || curStatus==='pm'?'selected':''}>▲ 調整中</option></select></td>`;
+                        pHtml += `<td class="p-2 text-center border-l"><select onchange="window.updateAttendanceCell('${m.name}', '${s.id}', 'status', this.value, 'parent')" class="bg-slate-50 border rounded px-2 py-1.5 text-xs font-bold outline-none shadow-sm"><option value="absent" ${curStatus==='absent'?'selected':''}>× 欠席</option><option value="all" ${curStatus==='all'?'selected':''}>〇 出席</option><option value="am" ${curStatus==='am'?'selected':''}>△ 午前</option><option value="pm" ${curStatus==='pm'?'selected':''}>▲ 午後</option><option value="triangle" ${curStatus==='triangle'?'selected':''}>調整中</option></select></td>`;
                     });
                     const lastSchedId = targetSchedules.length > 0 ? targetSchedules[targetSchedules.length - 1].id : '';
                     const noteVal = (lastSchedId && team.parentAttendanceData && team.parentAttendanceData[lastSchedId] && team.parentAttendanceData[lastSchedId][m.name]) ? (team.parentAttendanceData[lastSchedId][m.name].note || '') : '';
                     pHtml += `<td class="p-2.5 bg-slate-50/50 text-center border-l"><input type="text" value="${noteVal}" onchange="window.updateNoteCell('${m.name}', '${lastSchedId}', 'parent_att', this.value)" placeholder="自由意見..." class="w-32 bg-white border rounded px-2 py-1 text-xs outline-none"></td></tr>`;
                 });
                 pHtml += '</tbody></table></div>'; parentContainerEl.innerHTML = pHtml;
+                
+                if(!team.monthlySettings) team.monthlySettings = {};
+                if(!team.monthlySettings[currentMonth]) team.monthlySettings[currentMonth] = { deadline: '', notes: '' };
+                const mSettings = team.monthlySettings[currentMonth];
+                const dlInput = document.getElementById('monthly-deadline-input');
+                const notesInput = document.getElementById('monthly-notes-input');
+                if(dlInput) dlInput.value = mSettings.deadline || '';
+                if(notesInput) notesInput.value = mSettings.notes || '';
             }
 
-            let dutyParentsStaff = parentsStaff.filter(m => m.role !== 'family');
-
-            if(dutyParentsStaff.length === 0) { if(dutyTableEl) dutyTableEl.innerHTML = '<div class="text-xs text-slate-400 text-center py-4">該当メンバーがいません</div>'; }
-            else if(dutyTableEl) {
-                let html = '<table class="w-full text-left border-collapse text-xs bg-white"><thead><tr class="bg-slate-100 text-slate-700 border-b"><th class="p-2.5 font-black sticky left-0 top-0 z-30 bg-slate-100 shadow-sm whitespace-nowrap">氏名</th>';
-                targetSchedules.forEach(s => { html += `<th class="p-2.5 font-bold text-center whitespace-nowrap sticky top-0 z-20 bg-slate-100 border-l">${s.date.slice(5)}<br><span class="text-[10px] text-blue-600 font-normal">${s.destination || ''}</span></th>`; });
-                html += '<th class="p-2.5 font-bold text-center sticky top-0 z-20 bg-slate-200 border-l">備考</th></tr></thead><tbody class="divide-y divide-slate-100">';
-                dutyParentsStaff.forEach(m => {
-                    const labelStr = m.role === 'staff' ? `スタッフ (${m.staffRole})` : (m.role === 'parent' ? `保護者 (${m.grade}年・${m.parentType})` : m.role);
-                    let hasAnyAttendance = targetSchedules.some(s => { const attEntry = team.parentAttendanceData && team.parentAttendanceData[s.id] && team.parentAttendanceData[s.id][m.name]; return attEntry && attEntry.status !== 'absent'; });
-                    if(!hasAnyAttendance) return;
-                    html += `<tr class="hover:bg-slate-50"><td class="p-2.5 font-extrabold text-slate-900 sticky left-0 z-10 bg-white shadow-sm whitespace-nowrap">${m.name}<br><span class="text-[10px] text-slate-500 font-normal">${labelStr}</span></td>`;
-                    targetSchedules.forEach(s => {
-                        const attEntry = team.parentAttendanceData && team.parentAttendanceData[s.id] && team.parentAttendanceData[s.id][m.name];
-                        if(!attEntry || attEntry.status === 'absent') { html += `<td class="p-2 text-center align-middle border-l text-slate-400 bg-slate-100/50">欠席のため不可</td>`; }
-                        else {
-                            if(!team.dutyData[s.id]) team.dutyData[s.id] = {}; if(!team.dutyData[s.id][m.name]) team.dutyData[s.id][m.name] = { roles: {}, note: '' };
-                            const entry = team.dutyData[s.id][m.name]; if(!entry.roles) entry.roles = {};
-                            const roles = s.dutyRoles || ['当番', 'スコアラー'];
-                            
-                            roles.forEach(roleName => {
-                                if(!entry.roles[roleName]) entry.roles[roleName] = '×';
-                            });
-
-                            html += `<td class="p-2 text-center align-middle border-l"><div class="flex flex-col gap-2 py-1 items-center">`;
-                            roles.forEach(roleName => {
-                                const isBikeRole = roleName.includes('先導') || roleName.includes('引率');
-                                if (m.role === 'staff' && !isBikeRole) {
-                                    html += `<div class="bg-slate-100 border rounded-lg p-1.5 flex flex-col gap-1 text-[11px] shadow-sm w-28"><span class="font-extrabold text-slate-400 truncate">${roleName}</span><span class="text-slate-400 font-bold py-1">対象外</span></div>`;
-                                } else {
-                                    const curVal = entry.roles[roleName] || '×';
-                                    html += `<div class="bg-slate-50 border rounded-lg p-1.5 flex flex-col gap-1 text-[11px] shadow-sm w-28"><span class="font-extrabold text-slate-700 truncate">${roleName}</span><select onchange="window.updateDutyCell('${m.name}', '${s.id}', '${roleName}', this.value)" class="bg-white border rounded px-1.5 py-1 font-bold outline-none text-center text-xs"><option value="×" ${curVal==='×'?'selected':''}>✕ 不可</option><option value="◯" ${curVal==='◯'?'selected':''}>〇 可能</option><option value="午前" ${curVal==='午前'?'selected':''}>午前</option><option value="午後" ${curVal==='午後'?'selected':''}>午後</option></select></div>`;
-                                }
-                            });
-                            html += `</div></td>`;
-                        }
-                    });
-                    const lastSchedId = targetSchedules.length > 0 ? targetSchedules[targetSchedules.length - 1].id : '';
-                    const noteVal = (lastSchedId && team.dutyData[lastSchedId] && team.dutyData[lastSchedId][m.name]) ? (team.dutyData[lastSchedId][m.name].note || '') : '';
-                    html += `<td class="p-2.5 bg-slate-50/50 text-center border-l"><input type="text" value="${noteVal}" onchange="window.updateNoteCell('${m.name}', '${lastSchedId}', 'parent', this.value)" placeholder="自由意見..." class="w-32 bg-white border rounded px-2 py-1 text-xs outline-none"></td></tr>`;
-                });
-                html += '</tbody></table>'; dutyTableEl.innerHTML = html;
-            }
+            window.renderParentDutyTable();
 
             if(carTableEl) {
                 const teamMasterCars = (window.appData.masterCars || []).filter(mc => mc.teams && mc.teams.includes(currentTeamKey));
                 if(teamMasterCars.length === 0) { carTableEl.innerHTML = '<div class="text-xs text-slate-400 text-center py-4">登録車両がありません</div>'; }
                 else {
-                    let cHtml = '<div class="overflow-auto max-h-[500px] border rounded-xl shadow-inner"><table class="w-full text-left border-collapse text-xs bg-white"><thead><tr class="bg-slate-100 border-b text-slate-700"><th class="p-2.5 font-black sticky left-0 top-0 z-30 bg-slate-100 shadow-sm whitespace-nowrap">車両</th>';
-                    targetSchedules.forEach(s => { cHtml += `<th class="p-2.5 text-center whitespace-nowrap sticky top-0 z-20 bg-slate-100 border-l">${s.date.slice(5)}</th>`; });
+                    let cHtml = '<table class="w-full text-left border-collapse text-xs bg-white"><thead><tr class="bg-slate-100 border-b text-slate-700"><th class="p-2.5 font-black sticky left-0 top-0 z-30 bg-slate-100 shadow-sm whitespace-nowrap">車両</th>';
+                    targetSchedules.forEach(s => { cHtml += `<th class="p-2.5 text-center whitespace-nowrap sticky top-0 z-20 bg-slate-100 border-l">${formatDateWithDay(s.date)}</th>`; });
                     cHtml += '</tr></thead><tbody class="divide-y">';
                     teamMasterCars.forEach(car => {
                         cHtml += `<tr><td class="p-2.5 font-extrabold sticky left-0 z-10 bg-white shadow-sm whitespace-nowrap">${car.owner}号</td>`;
                         targetSchedules.forEach(s => {
                             if(!team.carAttendanceData[s.id]) team.carAttendanceData[s.id] = {}; if(!team.carAttendanceData[s.id][car.id]) team.carAttendanceData[s.id][car.id] = { status: 'absent' };
                             const curStatus = team.carAttendanceData[s.id][car.id].status || 'absent';
-                            cHtml += `<td class="p-2 text-center border-l"><select onchange="window.updateCarAttendanceCell('${car.id}', '${s.id}', 'status', this.value)" class="bg-slate-50 border rounded px-2 py-1.5 text-xs font-bold outline-none shadow-sm"><option value="absent" ${curStatus==='absent'?'selected':''}>× 不可</option><option value="all" ${curStatus==='all'?'selected':''}>〇 出動可</option><option value="double_circle" ${curStatus==='double_circle'?'selected':''}>◎ 道具車・出動可</option><option value="am" ${curStatus==='am'?'selected':''}>△ 午前</option><option value="pm" ${curStatus==='pm'?'selected':''}>▲ 午後</option></select></td>`;
+                            cHtml += `<td class="p-2 text-center border-l"><select onchange="window.updateCarAttendanceCell('${car.id}', '${s.id}', 'status', this.value)" class="bg-slate-50 border rounded px-2 py-1.5 text-xs font-bold outline-none shadow-sm"><option value="absent" ${curStatus==='absent'?'selected':''}>× 不可</option><option value="all" ${curStatus==='all'?'selected':''}>〇 出動可</option><option value="double_circle" ${curStatus==='double_circle'?'selected':''}>◎ 道具車・出動可</option><option value="am" ${curStatus==='am'?'selected':''}>△ 午前</option><option value="pm" ${curStatus==='pm'?'selected':''}>▲ 午後</option><option value="triangle" ${curStatus==='triangle'?'selected':''}>調整中</option></select></td>`;
                         });
                         cHtml += '</tr>';
                     });
                     cHtml += '</tbody></table>'; carTableEl.innerHTML = cHtml;
                 }
             }
+
+            setTimeout(() => {
+                document.querySelectorAll('#tab-content-attendance .overflow-auto').forEach((el, i) => {
+                    if(el.id && scrolls.has(el.id)) el.scrollTop = scrolls.get(el.id);
+                    else if(scrolls.has('att_scroll_'+i)) el.scrollTop = scrolls.get('att_scroll_'+i);
+                });
+            }, 0);
         }
 
         function getCurrentSchedule() {
             const team = window.appData.teams[window.appData.currentTeam];
             if(!team.schedules || team.schedules.length === 0) {
-                team.schedules = [{ id: 'sched_' + Date.now(), date: new Date().toISOString().split('T')[0], destination: '活動日', transportMode: 'car', dutyRoles: ['当番', 'スコアラー'], dutyAssignments: {}, tripTo: { cars: [], selfTransport: [], optOut: [], bikeSettings: { leader: '', escorts: [], useConvoy: false, convoyOrder: {} } }, tripFrom: { cars: [], selfTransport: [], optOut: [], bikeSettings: { leader: '', escorts: [], useConvoy: false, convoyOrder: {} } } }];
+                team.schedules = [{ id: 'sched_' + Date.now(), date: new Date().toISOString().split('T')[0], destination: '活動日', transportMode: 'car', dutyRoles: ['当番'], dutyAssignments: {}, tripTo: { cars: [], selfTransport: [], optOut: [], bikeSettings: { leader: '', escorts: [], useConvoy: false, convoyOrder: {} } }, tripFrom: { cars: [], selfTransport: [], optOut: [], bikeSettings: { leader: '', escorts: [], useConvoy: false, convoyOrder: {} } } }];
                 team.currentScheduleId = team.schedules[0].id;
             }
             let sched = team.schedules.find(s => s.id === team.currentScheduleId);
@@ -1029,7 +1323,27 @@
         window.switchSchedule = function(schedId) { window.appData.teams[window.appData.currentTeam].currentScheduleId = schedId; window.triggerUpdate(); };
         window.updateCurrentScheduleDate = function(val) { getCurrentSchedule().date = val; window.triggerUpdate(); };
         window.updateCurrentScheduleDesc = function(val) { getCurrentSchedule().destination = val; window.triggerUpdate(); };
-        window.updateCurrentScheduleDutyRoles = function(val) { getCurrentSchedule().dutyRoles = val.split(',').map(r => r.trim()).filter(r => r); window.triggerUpdate(); };
+        
+        window.updateDutyRolesCb = function() {
+            const standardRoles = ['当番', 'スコアラー', '球数カウント', '塁審'];
+            const cbs = document.querySelectorAll('input[name="duty-role-cb"]:checked');
+            const roles = Array.from(cbs).map(cb => cb.value);
+            
+            const customCb = document.getElementById('custom-duty-cb');
+            const customInput = document.getElementById('custom-duty-input');
+            const customVal = customInput ? customInput.value.trim() : '';
+            
+            if (customCb && customCb.checked) {
+                if (customVal !== '' && !standardRoles.includes(customVal)) {
+                    roles.push(customVal);
+                } else if (customVal === '') {
+                    customCb.checked = false;
+                }
+            }
+
+            getCurrentSchedule().dutyRoles = roles;
+            window.triggerUpdate();
+        };
         
         window.updateTransportMode = function(mode) { 
             const sched = getCurrentSchedule(); 
@@ -1218,7 +1532,7 @@
 
         window.openScheduleModal = function() { document.getElementById('schedule-modal').classList.remove('hidden'); document.getElementById('schedule-modal').classList.add('flex'); document.getElementById('new-sched-date').value = new Date().toISOString().split('T')[0]; };
         window.closeScheduleModal = function() { document.getElementById('schedule-modal').classList.add('hidden'); document.getElementById('schedule-modal').classList.remove('flex'); };
-        window.handleCreateSchedule = function(event) { event.preventDefault(); const date = document.getElementById('new-sched-date').value; const desc = document.getElementById('new-sched-desc').value.trim(); const team = window.appData.teams[window.appData.currentTeam]; const newId = 'sched_' + Date.now() + '_' + Math.floor(Math.random()*10000); team.schedules.push({ id: newId, date: date, destination: desc, transportMode: 'car', dutyRoles: ['当番', 'スコアラー'], dutyAssignments: {}, tripTo: { cars: [], selfTransport: [], optOut: [], bikeSettings: { leader: '', escorts: [], useConvoy: false, convoyOrder: {} } }, tripFrom: { cars: [], selfTransport: [], optOut: [], bikeSettings: { leader: '', escorts: [], useConvoy: false, convoyOrder: {} } } }); team.currentScheduleId = newId; window.appData.currentScheduleMonth = date.slice(0, 7); window.closeScheduleModal(); window.triggerUpdate(); };
+        window.handleCreateSchedule = function(event) { event.preventDefault(); const date = document.getElementById('new-sched-date').value; const desc = document.getElementById('new-sched-desc').value.trim(); const team = window.appData.teams[window.appData.currentTeam]; const newId = 'sched_' + Date.now() + '_' + Math.floor(Math.random()*10000); team.schedules.push({ id: newId, date: date, destination: desc, transportMode: 'car', dutyRoles: ['当番'], dutyAssignments: {}, tripTo: { cars: [], selfTransport: [], optOut: [], bikeSettings: { leader: '', escorts: [], useConvoy: false, convoyOrder: {} } }, tripFrom: { cars: [], selfTransport: [], optOut: [], bikeSettings: { leader: '', escorts: [], useConvoy: false, convoyOrder: {} } } }); team.currentScheduleId = newId; window.appData.currentScheduleMonth = date.slice(0, 7); window.closeScheduleModal(); window.triggerUpdate(); };
         window.deleteCurrentSchedule = function() { const team = window.appData.teams[window.appData.currentTeam]; if(team.schedules.length <= 1) { alert('最後の活動日は削除できません'); return; } if(!confirm('この活動日を削除しますか？')) return; const sched = getCurrentSchedule(); team.schedules = team.schedules.filter(s => s.id !== sched.id); const remaining = getFilteredSchedulesForCurrentMonth(); team.currentScheduleId = remaining.length > 0 ? remaining[0].id : team.schedules[0].id; window.triggerUpdate(); };
 
         window.openSeatAssignModal = function(carId, seatIndex) {
@@ -1390,6 +1704,90 @@
             document.getElementById('line-copy-modal').classList.remove('flex');
         };
 
+        window.openMonthlyDutyLineModal = function() {
+            const team = window.appData.teams[window.appData.currentTeam];
+            const monthSchedules = getFilteredSchedulesForCurrentMonth();
+            const activeMonth = window.appData.currentScheduleMonth || new Date().toISOString().slice(0, 7);
+            const monthNum = parseInt(activeMonth.split('-')[1], 10) || new Date().getMonth() + 1;
+
+            const teamMembers = (window.appData.members || []).filter(m => m.teams && m.teams.includes(window.appData.currentTeam) && !m.isKyubu);
+            
+            const parentNames = teamMembers.filter(m => m.role === 'parent' || m.role === 'staff').map(m => m.name.trim().split(/[\s ]+/)[0]);
+            const lastNameCounts = {};
+            parentNames.forEach(ln => { lastNameCounts[ln] = (lastNameCounts[ln] || 0) + 1; });
+
+            const formatName = (fullName) => {
+                if (!fullName) return '';
+                const parts = fullName.trim().split(/[\s ]+/);
+                const ln = parts[0];
+                if (lastNameCounts[ln] > 1) {
+                    return fullName; 
+                }
+                return ln;
+            };
+
+            const daysOfWeek = ['日', '月', '火', '水', '木', '金', '土'];
+
+            let text = `【${monthNum}月当番決定】\n`;
+            text += `いつもご協力ありがとうございます。\n`;
+            text += `${monthNum}月のお当番が決まりましたので、\n`;
+            text += `ご確認をお願いします(よろしく)\n\n`;
+
+            monthSchedules.sort((a,b) => a.date.localeCompare(b.date)).forEach(s => {
+                const dObj = new Date(s.date);
+                const m = dObj.getMonth() + 1;
+                const d = dObj.getDate();
+                const dayStr = daysOfWeek[dObj.getDay()];
+                const dateHeader = `${m}/${d}（${dayStr}）`;
+
+                const dutyAssignments = s.dutyAssignments || {};
+                let assignedList = [];
+                
+                Object.keys(dutyAssignments).forEach(roleKey => {
+                    if (roleKey.includes('当番')) {
+                        const assignedNames = dutyAssignments[roleKey] || [];
+                        assignedNames.forEach(name => {
+                            assignedList.push({ name: name, role: roleKey });
+                        });
+                    }
+                });
+
+                if (assignedList.length === 0) {
+                    text += `${dateHeader} (未割当)\n`;
+                } else {
+                    let formattedAssigned = assignedList.map(item => {
+                        const formatted = formatName(item.name);
+                        const dutyDetail = team.dutyData?.[s.id]?.[item.name]?.roles?.[item.role];
+                        let prefixSuffix = '';
+                        if (dutyDetail === '午前') prefixSuffix = '△';
+                        else if (dutyDetail === '午後') prefixSuffix = '▲';
+                        return prefixSuffix ? `${prefixSuffix}${formatted}` : formatted;
+                    });
+                    text += `${dateHeader}${formattedAssigned.join('・')}\n`;
+                }
+            });
+
+            text += `\n◎丸一日が厳しくなった場合やご都合が悪くなった場合は、当人同士で直接調整頂き、その結果を≪Aチームライン≫までご連絡ください。\n\n`;
+            text += `何かありましたらご相談ください。\n\n`;
+            text += `当番担当`;
+
+            document.getElementById('monthly-duty-textarea').value = text;
+            document.getElementById('monthly-duty-line-modal').classList.remove('hidden');
+            document.getElementById('monthly-duty-line-modal').classList.add('flex');
+        };
+
+        window.closeMonthlyDutyLineModal = function() {
+            document.getElementById('monthly-duty-line-modal').classList.add('hidden');
+            document.getElementById('monthly-duty-line-modal').classList.remove('flex');
+        };
+
+        window.copyMonthlyDutyText = function() {
+            const ta = document.getElementById('monthly-duty-textarea');
+            ta.select();
+            document.execCommand('copy');
+            alert('月毎当番テキストをクリップボードにコピーしました！');
+        };
+
         function isTripEqual(tripA, tripB, transportMode) {
             if (!tripA || !tripB) return false;
             if (transportMode === 'bike') {
@@ -1495,7 +1893,14 @@
                 (sched.dutyRoles || []).forEach(role => {
                     const assigned = sched.dutyAssignments?.[role] || [];
                     if (assigned.length > 0) {
-                        const asStr = assigned.map(getFormattedNameForLine).join('・');
+                        const asStr = assigned.map(mName => {
+                            const formatted = getFormattedNameForLine(mName);
+                            const dutyDetail = team.dutyData?.[sched.id]?.[mName]?.roles?.[role];
+                            let prefixSuffix = '';
+                            if (dutyDetail === '午前') prefixSuffix = '△';
+                            else if (dutyDetail === '午後') prefixSuffix = '▲';
+                            return prefixSuffix ? `${prefixSuffix}${formatted}` : formatted;
+                        }).join('・');
                         text += `${role}／${asStr}\n`;
                     }
                 });
@@ -1768,14 +2173,32 @@
                 monthSchedules.forEach(s => {
                     const btn = document.createElement('button'); btn.type = 'button'; btn.onclick = () => window.switchSchedule(s.id);
                     btn.className = `px-3 py-1.5 rounded-lg text-xs font-bold transition border ${s.id === sched.id ? 'bg-blue-600 text-white border-blue-600 shadow' : 'bg-white text-slate-700 hover:bg-slate-50'}`;
-                    btn.textContent = `${s.date.slice(5)} (${s.destination || '無題'})`; rowDiv.appendChild(btn);
+                    btn.textContent = `${formatDateWithDay(s.date)} (${s.destination || '無題'})`; rowDiv.appendChild(btn);
                 });
                 monthlyContainer.appendChild(rowDiv);
             }
 
             document.getElementById('current-schedule-date').value = sched.date || '';
             document.getElementById('current-schedule-desc').value = sched.destination || '';
-            document.getElementById('current-schedule-duty-roles').value = (sched.dutyRoles || []).join(', ');
+            
+            const roles = sched.dutyRoles || [];
+            document.querySelectorAll('input[name="duty-role-cb"]').forEach(cb => {
+                cb.checked = roles.includes(cb.value);
+            });
+            
+            const standardRoles = ['当番', 'スコアラー', '球数カウント', '塁審'];
+            const customRole = roles.find(r => !standardRoles.includes(r));
+            const customCb = document.getElementById('custom-duty-cb');
+            const customInput = document.getElementById('custom-duty-input');
+            if (customCb && customInput) {
+                if (customRole) {
+                    customCb.checked = true;
+                    customInput.value = customRole;
+                } else {
+                    customCb.checked = false;
+                    customInput.value = '';
+                }
+            }
 
             const carModeBtn = document.getElementById('mode-car-btn'); const bikeModeBtn = document.getElementById('mode-bike-btn');
             const isBike = sched.transportMode === 'bike';
@@ -2045,6 +2468,13 @@
                         let displayCount = 0;
                         
                         eligibleParentsStaff.forEach(m => {
+                            const standardRoles = ['当番', 'スコアラー', '球数カウント', '塁審'];
+                            let allowed = m.allowedDuties || standardRoles;
+                            if (allowed.length === 1 && allowed[0] === 'NONE') allowed = [];
+                            
+                            // 基本項目に該当するが、メンバーの可能項目に含まれていない場合はスキップ
+                            if (standardRoles.includes(role) && !allowed.includes(role)) return;
+
                             const isAssigned = sched.dutyAssignments?.[role]?.includes(m.name);
                             const att = team.parentAttendanceData?.[sched.id]?.[m.name];
                             const status = att ? att.status : 'absent';
@@ -2068,6 +2498,7 @@
                                 else if(req === '×') reqBadge = '<span class="text-[10px] bg-rose-50 text-rose-500 px-1 rounded border border-rose-200">× 不可</span>';
                                 else if(req === '午前') reqBadge = '<span class="text-[10px] bg-indigo-50 text-indigo-600 px-1 rounded border border-indigo-200">午前</span>';
                                 else if(req === '午後') reqBadge = '<span class="text-[10px] bg-purple-50 text-purple-600 px-1 rounded border border-purple-200">午後</span>';
+                                else if(req === '調整中') reqBadge = '<span class="text-[10px] bg-amber-50 text-amber-600 px-1 rounded border border-amber-200">調整中</span>';
                                 
                                 const statusVal = team.parentAttendanceData?.[sched.id]?.[m.name]?.status || 'absent';
                                 const isAbsent = statusVal === 'absent';
@@ -2090,6 +2521,11 @@
                         
                         let addOpts = '<option value="">＋ その他のメンバーを追加</option>';
                         eligibleParentsStaff.forEach(m => { 
+                            const standardRoles = ['当番', 'スコアラー', '球数カウント', '塁審'];
+                            let allowed = m.allowedDuties || standardRoles;
+                            if (allowed.length === 1 && allowed[0] === 'NONE') allowed = [];
+                            if (standardRoles.includes(role) && !allowed.includes(role)) return;
+
                             const isAssigned = sched.dutyAssignments?.[role]?.includes(m.name);
                             const att = team.parentAttendanceData?.[sched.id]?.[m.name];
                             const isAtt = ['all', 'triangle', 'am', 'pm'].includes(att ? att.status : 'absent');
@@ -2105,7 +2541,7 @@
                         addDiv.innerHTML = `<select onchange="if(this.value){ window.toggleDutyAssignment('${role}', this.value, true); this.value=''; }" class="w-full text-xs font-bold border border-slate-300 rounded px-2 py-1.5 bg-white text-slate-600 outline-none">${addOpts}</select>`;
                         roleBox.appendChild(addDiv);
 
-                        dutyGrid.appendChild(roleBox);
+                        dutyGrid.appendChild(roleBox); // dutyBoxからroleBoxに修正
                     });
                 }
             }

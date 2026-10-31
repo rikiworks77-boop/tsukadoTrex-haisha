@@ -317,37 +317,97 @@
     </main>
 
     <!-- モーダル群 -->
-    <div id="edit-member-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50"><div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4"><h3 class="text-lg font-black text-blue-900">メンバー情報の編集</h3><form onsubmit="window.handleUpdateMember(event)" class="space-y-3"><input type="hidden" id="edit-member-id"><div><label class="block text-xs font-bold text-slate-600 mb-1">氏名</label><input type="text" id="edit-member-name" required class="w-full bg-slate-50 border rounded-lg px-3 py-2 text-sm outline-none font-bold"></div><div><label class="block text-xs font-bold text-slate-600 mb-1">役割</label><select id="edit-member-role" onchange="window.toggleNewMemberRoleOptions(this.value, 'edit')" class="w-full bg-slate-50 border rounded-lg px-3 py-2 text-sm font-bold outline-none"><option value="player">選手</option><option value="parent">保護者</option><option value="staff">スタッフ</option><option value="family">家族</option></select></div><div id="edit-member-sub-container"><label class="block text-xs font-bold text-slate-600 mb-1" id="edit-member-sub-label">学年</label><div id="edit-member-sub-wrapper" class="flex gap-2"></div></div>
+    <div id="edit-member-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-2xl w-[95%] sm:w-[600px] max-h-[90vh] overflow-y-auto p-4 sm:p-6 mx-auto space-y-4">
+            <h3 class="text-lg font-black text-blue-900">メンバー情報の編集</h3>
+            <form onsubmit="window.handleUpdateMember(event)" class="space-y-3">
+                <input type="hidden" id="edit-member-id">
+                <div><label class="block text-xs font-bold text-slate-600 mb-1">氏名</label><input type="text" id="edit-member-name" required class="w-full bg-slate-50 border rounded-lg px-3 py-2 text-sm outline-none font-bold"></div>
+                <div><label class="block text-xs font-bold text-slate-600 mb-1">役割</label><select id="edit-member-role" onchange="window.toggleNewMemberRoleOptions(this.value, 'edit')" class="w-full bg-slate-50 border rounded-lg px-3 py-2 text-sm font-bold outline-none"><option value="player">選手</option><option value="parent">保護者</option><option value="staff">スタッフ</option><option value="family">家族</option></select></div>
+                <div id="edit-member-sub-container"><label class="block text-xs font-bold text-slate-600 mb-1" id="edit-member-sub-label">学年</label><div id="edit-member-sub-wrapper" class="flex gap-2"></div></div>
+                <div id="edit-member-duties-container" class="bg-slate-50 p-3 rounded-lg border border-slate-200 hidden">
+                    <label class="block text-xs font-bold text-slate-700 mb-2">📋 担当可能な役割（保護者・スタッフ用）</label>
+                    <div class="flex flex-wrap gap-4">
+                        <label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-member-duties" value="当番" class="rounded w-4 h-4 text-blue-600"> 当番</label>
+                        <label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-member-duties" value="スコアラー" class="rounded w-4 h-4 text-blue-600"> スコアラー</label>
+                        <label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-member-duties" value="球数カウント" class="rounded w-4 h-4 text-blue-600"> 球数カウント</label>
+                        <label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-member-duties" value="塁審" class="rounded w-4 h-4 text-blue-600"> 塁審</label>
+                    </div>
+                </div>
+                <div><label class="block text-xs font-bold text-slate-600 mb-1">所属チーム</label><div class="flex gap-4 bg-slate-50 p-2.5 rounded-lg border"><label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-member-teams" value="A" class="rounded w-4 h-4 text-blue-600"> A</label><label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-member-teams" value="B" class="rounded w-4 h-4 text-blue-600"> B</label><label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-member-teams" value="C" class="rounded w-4 h-4 text-blue-600"> C</label><label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-member-teams" value="D" class="rounded w-4 h-4 text-blue-600"> D</label></div></div>
+                <div class="flex gap-4 pt-1"><label class="flex items-center gap-1.5 text-xs font-bold text-blue-700 cursor-pointer bg-blue-50 px-3 py-2 rounded-lg border border-blue-200"><input type="checkbox" id="edit-member-is-selftransport" class="rounded w-4 h-4 text-blue-600"> 基本自車移動</label><label class="flex items-center gap-1.5 text-xs font-bold text-amber-700 cursor-pointer bg-amber-50 px-3 py-2 rounded-lg border border-amber-200"><input type="checkbox" id="edit-member-is-kyubu" class="rounded w-4 h-4 text-amber-600"> 休部にする</label></div>
+                <div class="flex gap-2 pt-2"><button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-xs transition shadow">保存する</button><button type="button" onclick="window.closeEditMemberModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2.5 rounded-xl text-xs transition">キャンセル</button></div>
+            </form>
+        </div>
+    </div>
     
-    <div id="edit-member-duties-container" class="bg-slate-50 p-3 rounded-lg border border-slate-200 hidden">
-        <label class="block text-xs font-bold text-slate-700 mb-2">📋 担当可能な役割（保護者・スタッフ用）</label>
-        <div class="flex flex-wrap gap-4">
-            <label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-member-duties" value="当番" class="rounded w-4 h-4 text-blue-600"> 当番</label>
-            <label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-member-duties" value="スコアラー" class="rounded w-4 h-4 text-blue-600"> スコアラー</label>
-            <label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-member-duties" value="球数カウント" class="rounded w-4 h-4 text-blue-600"> 球数カウント</label>
-            <label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-member-duties" value="塁審" class="rounded w-4 h-4 text-blue-600"> 塁審</label>
+    <div id="edit-car-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-2xl w-[95%] sm:w-[600px] max-h-[90vh] overflow-y-auto p-4 sm:p-6 mx-auto space-y-4">
+            <h3 class="text-lg font-black text-blue-900">車両マスターの編集（固定メンバー）</h3>
+            <form onsubmit="window.handleUpdateMasterCar(event)" class="space-y-3">
+                <input type="hidden" id="edit-car-id">
+                <div><label class="block text-xs font-bold text-slate-600 mb-1">車両名（オーナー名）</label><input type="text" id="edit-car-owner" required class="w-full bg-slate-50 border rounded-lg px-3 py-2 text-sm outline-none font-bold"></div>
+                <div><label class="block text-xs font-bold text-slate-600 mb-1">ドライバー</label><select id="edit-car-driver" required class="w-full bg-slate-50 border rounded-lg px-3 py-2 text-sm font-bold outline-none text-slate-700"></select></div>
+                <div class="grid grid-cols-2 gap-2"><div><label class="block text-xs font-bold text-slate-600 mb-1">乗車定員</label><select id="edit-car-capacity" onchange="window.renderCarSeatsUI(this.value, 'edit-car-fixed-seats', 'edit')" class="w-full bg-slate-50 border rounded-lg px-2 py-2 text-xs font-bold outline-none"><option value="5">5人乗り</option><option value="7">7人乗り</option><option value="8">8人乗り</option></select></div><div><label class="block text-xs font-bold text-slate-600 mb-1">道具車枠(通常3)</label><input type="number" id="edit-car-gearseats" min="0" max="8" class="w-full bg-slate-50 border rounded-lg px-2 py-2 text-sm font-bold outline-none"></div></div>
+                <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 mt-2"><label class="block text-xs font-bold text-slate-600 mb-2">🚗 固定同乗者の事前登録</label><div id="edit-car-fixed-seats" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div></div>
+                <div><label class="block text-xs font-bold text-slate-600 mb-1">利用チーム</label><div class="flex gap-4 bg-slate-50 p-2.5 rounded-lg border"><label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-car-teams" value="A" class="rounded w-4 h-4 text-blue-600"> A</label><label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-car-teams" value="B" class="rounded w-4 h-4 text-blue-600"> B</label><label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-car-teams" value="C" class="rounded w-4 h-4 text-blue-600"> C</label><label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-car-teams" value="D" class="rounded w-4 h-4 text-blue-600"> D</label></div></div>
+                <div class="flex gap-2 pt-2"><button type="submit" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs transition shadow">保存する</button><button type="button" onclick="window.closeEditCarModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2.5 rounded-xl text-xs transition">キャンセル</button></div>
+            </form>
+        </div>
+    </div>
+    
+    <div id="seat-assign-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-2xl w-[95%] sm:w-[600px] max-h-[90vh] overflow-y-auto p-4 sm:p-6 mx-auto space-y-4">
+            <h3 class="text-base font-black text-blue-900">空席へのメンバー割り当て</h3>
+            <p id="seat-assign-desc" class="text-xs text-slate-500">割り当てたいメンバーを選択してください：</p>
+            <input type="hidden" id="assign-target-car-id"><input type="hidden" id="assign-target-seat-idx">
+            <select id="seat-assign-member-select" class="w-full bg-slate-50 border rounded-xl px-3 py-2 text-sm font-bold text-blue-900 outline-none"></select>
+            <div class="flex gap-2 pt-2"><button type="button" onclick="window.confirmSeatAssignment()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-xl text-xs transition shadow">割り当てる</button><button type="button" onclick="window.closeSeatAssignModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2 rounded-xl text-xs transition">キャンセル</button></div>
+        </div>
+    </div>
+    
+    <!-- 自車移動セレクト用モーダル -->
+    <div id="self-transport-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-2xl w-[95%] sm:w-[600px] max-h-[90vh] overflow-y-auto p-4 sm:p-6 mx-auto space-y-4">
+            <h3 class="text-base font-black text-blue-900">🚗 自車移動 / 現地集合への追加</h3>
+            <p class="text-xs text-slate-500">自車移動リストに追加したいメンバーを選択してください：</p>
+            <select id="self-transport-member-select" class="w-full bg-slate-50 border rounded-xl px-3 py-2 text-sm font-bold text-blue-900 outline-none"></select>
+            <div class="flex gap-2 pt-2"><button type="button" onclick="window.confirmSelfTransportAssignment()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-xl text-xs transition shadow">追加する</button><button type="button" onclick="window.closeSelfTransportModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2 rounded-xl text-xs transition">キャンセル</button></div>
         </div>
     </div>
 
-    <div><label class="block text-xs font-bold text-slate-600 mb-1">所属チーム</label><div class="flex gap-4 bg-slate-50 p-2.5 rounded-lg border"><label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-member-teams" value="A" class="rounded w-4 h-4 text-blue-600"> A</label><label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-member-teams" value="B" class="rounded w-4 h-4 text-blue-600"> B</label><label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-member-teams" value="C" class="rounded w-4 h-4 text-blue-600"> C</label><label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-member-teams" value="D" class="rounded w-4 h-4 text-blue-600"> D</label></div></div><div class="flex gap-4 pt-1"><label class="flex items-center gap-1.5 text-xs font-bold text-blue-700 cursor-pointer bg-blue-50 px-3 py-2 rounded-lg border border-blue-200"><input type="checkbox" id="edit-member-is-selftransport" class="rounded w-4 h-4 text-blue-600"> 基本自車移動</label><label class="flex items-center gap-1.5 text-xs font-bold text-amber-700 cursor-pointer bg-amber-50 px-3 py-2 rounded-lg border border-amber-200"><input type="checkbox" id="edit-member-is-kyubu" class="rounded w-4 h-4 text-amber-600"> 休部にする</label></div><div class="flex gap-2 pt-2"><button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-xs transition shadow">保存する</button><button type="button" onclick="window.closeEditMemberModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2.5 rounded-xl text-xs transition">キャンセル</button></div></form></div></div>
+    <div id="unassigned-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-2xl w-[95%] sm:w-[600px] max-h-[90vh] overflow-y-auto p-4 sm:p-6 mx-auto flex flex-col">
+            <h3 class="text-base font-black text-blue-900 mb-2">未割り当てメンバーのクイック割当</h3>
+            <select id="quick-target-member-select" class="w-full bg-slate-50 border rounded-xl px-3 py-2 text-sm font-bold text-blue-900 mb-3 outline-none"></select>
+            <div id="quick-assign-cars-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[300px] overflow-y-auto pr-1"></div>
+            <button type="button" onclick="window.closeUnassignedModal()" class="mt-4 px-4 py-2 bg-slate-200 text-slate-700 rounded-xl font-bold w-full">閉じる</button>
+        </div>
+    </div>
     
-    <div id="edit-car-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50"><div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto"><h3 class="text-lg font-black text-blue-900">車両マスターの編集（固定メンバー）</h3><form onsubmit="window.handleUpdateMasterCar(event)" class="space-y-3"><input type="hidden" id="edit-car-id"><div><label class="block text-xs font-bold text-slate-600 mb-1">車両名（オーナー名）</label><input type="text" id="edit-car-owner" required class="w-full bg-slate-50 border rounded-lg px-3 py-2 text-sm outline-none font-bold"></div><div><label class="block text-xs font-bold text-slate-600 mb-1">ドライバー</label><select id="edit-car-driver" required class="w-full bg-slate-50 border rounded-lg px-3 py-2 text-sm font-bold outline-none text-slate-700"></select></div><div class="grid grid-cols-2 gap-2"><div><label class="block text-xs font-bold text-slate-600 mb-1">乗車定員</label><select id="edit-car-capacity" onchange="window.renderCarSeatsUI(this.value, 'edit-car-fixed-seats', 'edit')" class="w-full bg-slate-50 border rounded-lg px-2 py-2 text-xs font-bold outline-none"><option value="5">5人乗り</option><option value="7">7人乗り</option><option value="8">8人乗り</option></select></div><div><label class="block text-xs font-bold text-slate-600 mb-1">道具車枠(通常3)</label><input type="number" id="edit-car-gearseats" min="0" max="8" class="w-full bg-slate-50 border rounded-lg px-2 py-2 text-sm font-bold outline-none"></div></div><div class="bg-slate-50 p-3 rounded-lg border border-slate-200 mt-2"><label class="block text-xs font-bold text-slate-600 mb-2">🚗 固定同乗者の事前登録</label><div id="edit-car-fixed-seats" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div></div><div><label class="block text-xs font-bold text-slate-600 mb-1">利用チーム</label><div class="flex gap-4 bg-slate-50 p-2.5 rounded-lg border"><label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-car-teams" value="A" class="rounded w-4 h-4 text-blue-600"> A</label><label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-car-teams" value="B" class="rounded w-4 h-4 text-blue-600"> B</label><label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-car-teams" value="C" class="rounded w-4 h-4 text-blue-600"> C</label><label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-car-teams" value="D" class="rounded w-4 h-4 text-blue-600"> D</label></div></div><div class="flex gap-2 pt-2"><button type="submit" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs transition shadow">保存する</button><button type="button" onclick="window.closeEditCarModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2.5 rounded-xl text-xs transition">キャンセル</button></div></form></div></div>
+    <div id="logo-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-2xl w-[95%] sm:w-[600px] max-h-[90vh] overflow-y-auto p-4 sm:p-6 mx-auto space-y-4">
+            <h3 class="text-lg font-black text-blue-900">ロゴ画像の変更</h3>
+            <div><label class="block text-xs font-bold text-slate-600 mb-1">画像をアップロード</label><input type="file" id="logo-file-input" accept="image/*" onchange="window.handleLogoUpload(event)" class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"></div>
+            <div><label class="block text-xs font-bold text-slate-600 mb-1">または画像URLを入力</label><input type="text" id="logo-url-input" placeholder="https://example.com/logo.png" class="w-full bg-slate-50 border rounded-xl px-3 py-2 text-sm outline-none"></div>
+            <div class="flex gap-2 pt-2"><button type="button" onclick="window.saveLogoUrl()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-xl text-xs transition shadow">保存する</button><button type="button" onclick="window.clearLogo()" class="bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold px-4 py-2 rounded-xl text-xs transition border border-rose-200">ロゴ削除</button><button type="button" onclick="window.closeLogoModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2 rounded-xl text-xs transition">閉じる</button></div>
+        </div>
+    </div>
     
-    <div id="seat-assign-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50"><div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4"><h3 class="text-base font-black text-blue-900">空席へのメンバー割り当て</h3><p id="seat-assign-desc" class="text-xs text-slate-500">割り当てたいメンバーを選択してください：</p><input type="hidden" id="assign-target-car-id"><input type="hidden" id="assign-target-seat-idx"><select id="seat-assign-member-select" class="w-full bg-slate-50 border rounded-xl px-3 py-2 text-sm font-bold text-blue-900 outline-none"></select><div class="flex gap-2 pt-2"><button type="button" onclick="window.confirmSeatAssignment()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-xl text-xs transition shadow">割り当てる</button><button type="button" onclick="window.closeSeatAssignModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2 rounded-xl text-xs transition">キャンセル</button></div></div></div>
-    
-    <!-- 自車移動セレクト用モーダル -->
-    <div id="self-transport-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50"><div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4"><h3 class="text-base font-black text-blue-900">🚗 自車移動 / 現地集合への追加</h3><p class="text-xs text-slate-500">自車移動リストに追加したいメンバーを選択してください：</p><select id="self-transport-member-select" class="w-full bg-slate-50 border rounded-xl px-3 py-2 text-sm font-bold text-blue-900 outline-none"></select><div class="flex gap-2 pt-2"><button type="button" onclick="window.confirmSelfTransportAssignment()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-xl text-xs transition shadow">追加する</button><button type="button" onclick="window.closeSelfTransportModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2 rounded-xl text-xs transition">キャンセル</button></div></div></div>
-
-    <div id="unassigned-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50"><div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 flex flex-col max-h-[85vh]"><h3 class="text-base font-black text-blue-900 mb-2">未割り当てメンバーのクイック割当</h3><select id="quick-target-member-select" class="w-full bg-slate-50 border rounded-xl px-3 py-2 text-sm font-bold text-blue-900 mb-3 outline-none"></select><div id="quick-assign-cars-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[300px] overflow-y-auto pr-1"></div><button type="button" onclick="window.closeUnassignedModal()" class="mt-4 px-4 py-2 bg-slate-200 text-slate-700 rounded-xl font-bold w-full">閉じる</button></div></div>
-    
-    <div id="logo-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50"><div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4"><h3 class="text-lg font-black text-blue-900">ロゴ画像の変更</h3><div><label class="block text-xs font-bold text-slate-600 mb-1">画像をアップロード</label><input type="file" id="logo-file-input" accept="image/*" onchange="window.handleLogoUpload(event)" class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"></div><div><label class="block text-xs font-bold text-slate-600 mb-1">または画像URLを入力</label><input type="text" id="logo-url-input" placeholder="https://example.com/logo.png" class="w-full bg-slate-50 border rounded-xl px-3 py-2 text-sm outline-none"></div><div class="flex gap-2 pt-2"><button type="button" onclick="window.saveLogoUrl()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-xl text-xs transition shadow">保存する</button><button type="button" onclick="window.clearLogo()" class="bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold px-4 py-2 rounded-xl text-xs transition border border-rose-200">ロゴ削除</button><button type="button" onclick="window.closeLogoModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2 rounded-xl text-xs transition">閉じる</button></div></div></div>
-    
-    <div id="schedule-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50"><div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6"><h3 class="text-xl font-black text-blue-900 mb-4">新しい活動日の追加</h3><form onsubmit="window.handleCreateSchedule(event)"><div><label class="block text-xs font-bold text-slate-600 mb-1">活動日</label><input type="date" id="new-sched-date" required class="w-full bg-slate-50 border rounded-xl px-3 py-2 text-sm outline-none"></div><div class="mt-4"><label class="block text-xs font-bold text-slate-600 mb-1">行先・大会名</label><input type="text" id="new-sched-desc" required placeholder="例: 〇〇小学校遠征" class="w-full bg-slate-50 border rounded-xl px-3 py-2 text-sm outline-none"></div><div class="flex justify-end gap-3 pt-6"><button type="button" onclick="window.closeScheduleModal()" class="px-4 py-2 text-sm font-bold text-slate-600">キャンセル</button><button type="submit" class="px-5 py-2 bg-emerald-600 text-white rounded-xl text-sm font-bold shadow">追加する</button></div></form></div></div>
+    <div id="schedule-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-2xl w-[95%] sm:w-[600px] max-h-[90vh] overflow-y-auto p-4 sm:p-6 mx-auto">
+            <h3 class="text-xl font-black text-blue-900 mb-4">新しい活動日の追加</h3>
+            <form onsubmit="window.handleCreateSchedule(event)">
+                <div><label class="block text-xs font-bold text-slate-600 mb-1">活動日</label><input type="date" id="new-sched-date" required class="w-full bg-slate-50 border rounded-xl px-3 py-2 text-sm outline-none"></div>
+                <div class="mt-4"><label class="block text-xs font-bold text-slate-600 mb-1">行先・大会名</label><input type="text" id="new-sched-desc" required placeholder="例: 〇〇小学校遠征" class="w-full bg-slate-50 border rounded-xl px-3 py-2 text-sm outline-none"></div>
+                <div class="flex justify-end gap-3 pt-6"><button type="button" onclick="window.closeScheduleModal()" class="px-4 py-2 text-sm font-bold text-slate-600">キャンセル</button><button type="submit" class="px-5 py-2 bg-emerald-600 text-white rounded-xl text-sm font-bold shadow">追加する</button></div>
+            </form>
+        </div>
+    </div>
     
     <div id="line-copy-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] flex flex-col">
+        <div class="bg-white rounded-2xl shadow-2xl w-[95%] sm:w-[600px] max-h-[90vh] overflow-y-auto p-4 sm:p-6 mx-auto space-y-4 flex flex-col">
             <h3 class="text-lg font-black text-blue-900">個別LINE出力</h3>
-            
             <div id="line-copy-config-area" class="space-y-4 flex-col flex">
                 <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1">出欠表のURL等（任意・上部に表示されます）</label>
@@ -358,12 +418,10 @@
                     <div id="line-copy-sched-list" class="space-y-1.5"></div>
                 </div>
             </div>
-
             <div id="line-copy-edit-area" class="hidden flex-col gap-2 flex-1 min-h-[250px]">
                 <label class="block text-xs font-bold text-slate-600">生成されたテキスト（自由に編集できます）</label>
                 <textarea id="line-copy-textarea" class="w-full flex-1 bg-slate-50 border border-slate-300 rounded-lg p-3 text-xs outline-none resize-none shadow-inner leading-relaxed font-mono"></textarea>
             </div>
-
             <div class="flex gap-2 pt-2" id="line-copy-action-buttons">
                 <button type="button" onclick="window.generateLineTextForEdit()" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-bold py-2.5 rounded-xl text-sm transition shadow flex justify-center items-center gap-1">🔄 テキストを生成する</button>
                 <button type="button" onclick="window.closeLineCopyModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2.5 rounded-xl text-xs transition">キャンセル</button>
@@ -372,7 +430,7 @@
     </div>
 
     <div id="monthly-duty-line-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] flex flex-col">
+        <div class="bg-white rounded-2xl shadow-2xl w-[95%] sm:w-[600px] max-h-[90vh] overflow-y-auto p-4 sm:p-6 mx-auto space-y-4 flex flex-col">
             <h3 class="text-lg font-black text-blue-900">📱 月毎当番LINE出力</h3>
             <div class="flex flex-col gap-2 flex-1 min-h-[350px]">
                 <label class="block text-xs font-bold text-slate-600">生成された月毎当番テキスト（編集可能）</label>
@@ -383,7 +441,6 @@
                 <button type="button" onclick="window.closeMonthlyDutyLineModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2.5 rounded-xl text-xs transition">閉じる</button>
             </div>
         </div>
-
     </div>
 <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js";
@@ -2741,3 +2798,5 @@
             window.updateMonthlyDutySummary();
         }
     </script>
+<body>
+<html>

@@ -874,8 +874,8 @@
                 ['attendance', 'members', 'schedule'].forEach(t => {
                     const el = document.getElementById(`tab-content-${t}`); const navBtn = document.getElementById(`nav-tab-${t}`);
                     if(el && navBtn) {
-                        if(t === currentTab) { el.classList.remove('hidden'); navBtn.className = "flex-1 sm:flex-initial px-4 py-2.5 rounded-xl font-black text-xs sm:text-sm transition flex items-center justify-center gap-2 bg-blue-600 text-white shadow"; }
-                        else { el.classList.add('hidden'); navBtn.className = "flex-1 sm:flex-initial px-4 py-2.5 rounded-xl font-black text-xs sm:text-sm transition flex items-center justify-center gap-2 bg-slate-100 text-slate-600 hover:bg-slate-200"; }
+                        if(t === currentTab) { el.classList.remove('hidden'); navBtn.className = "shrink-0 px-4 py-2.5 rounded-xl font-black text-xs sm:text-sm transition flex items-center justify-center gap-2 bg-blue-600 text-white shadow"; }
+                        else { el.classList.add('hidden'); navBtn.className = "shrink-0 px-4 py-2.5 rounded-xl font-black text-xs sm:text-sm transition flex items-center justify-center gap-2 bg-slate-100 text-slate-600 hover:bg-slate-200"; }
                     }
                 });
 
@@ -1090,7 +1090,12 @@
 
             if(carListEl) {
                 carListEl.innerHTML = ''; 
-                const teamCars = (window.appData.masterCars || []).filter(mc => mc.teams && mc.teams.includes(currentTeamKey));
+                // ★ currentTeam に修正済みです ★
+                const teamCars = (window.appData.masterCars || []).filter(mc => mc.teams && mc.teams.includes(currentTeam));
+                
+                const carCountEl = document.getElementById('master-car-db-count');
+                if(carCountEl) carCountEl.textContent = teamCars.length + '台';
+
                 if(teamCars.length === 0) { carListEl.innerHTML = '<div class="text-xs text-slate-400 col-span-full text-center py-4">登録車両がありません</div>'; }
                 else {
                     teamCars.forEach(mc => {
@@ -2815,6 +2820,5 @@
             }
             window.updateMonthlyDutySummary();
         }
-    </script>
-<body>
+    </script><body>
 <html>

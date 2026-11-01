@@ -480,7 +480,8 @@
                 <button type="button" onclick="window.closeMonthlyDutyLineModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2.5 rounded-xl text-xs transition">閉じる</button>
             </div>
         </div>
-    </div><script type="module">
+    </div>
+<script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js";
         import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-database.js";
 
@@ -1110,7 +1111,6 @@
 
             if(carListEl) {
                 carListEl.innerHTML = ''; 
-                // ★ currentTeam に修正済みです ★
                 const teamCars = (window.appData.masterCars || []).filter(mc => mc.teams && mc.teams.includes(currentTeam));
                 
                 const carCountEl = document.getElementById('master-car-db-count');
@@ -1245,7 +1245,7 @@
             if(parentsStaff.length === 0) { 
                 dutyTableEl.innerHTML = '<div class="text-xs text-slate-400 text-center py-4">該当メンバーがいません</div>'; 
             } else {
-                let html = '<div class="overflow-x-auto w-full border rounded-xl shadow-inner -webkit-overflow-scrolling-touch"><table class="min-w-max w-full text-left border-collapse text-xs bg-white"><thead><tr class="bg-slate-100 text-slate-700 border-b"><th class="p-2.5 font-black sticky left-0 top-0 z-30 bg-slate-100 shadow-sm whitespace-nowrap">氏名</th>';
+                let html = '<table class="min-w-max w-full text-left border-collapse text-xs bg-white"><thead><tr class="bg-slate-100 text-slate-700 border-b"><th class="p-2.5 font-black sticky left-0 top-0 z-30 bg-slate-100 shadow-sm whitespace-nowrap">氏名</th>';
                 targetSchedules.forEach(s => { html += `<th class="p-2.5 font-bold text-center whitespace-nowrap sticky top-0 z-20 bg-slate-100 border-l">${formatDateWithDay(s.date)}<br><span class="text-[10px] text-blue-600 font-normal truncate">${s.destination || ''}</span></th>`; });
                 html += '<th class="p-2.5 font-bold text-center sticky top-0 z-20 bg-slate-200 border-l whitespace-nowrap">備考</th></tr></thead><tbody class="divide-y divide-slate-100">';
                 
@@ -1296,7 +1296,7 @@
                     const noteVal = (lastSchedId && team.dutyData[lastSchedId] && team.dutyData[lastSchedId][m.name]) ? (team.dutyData[lastSchedId][m.name].note || '') : '';
                     html += `<td class="p-2.5 bg-slate-50/50 text-center border-l whitespace-nowrap"><input type="text" value="${noteVal}" onchange="window.updateNoteCell('${m.name}', '${lastSchedId}', 'parent', this.value)" placeholder="自由意見..." class="w-32 bg-white border rounded px-2 py-1 text-xs outline-none"></td></tr>`;
                 });
-                html += '</tbody></table></div>'; dutyTableEl.innerHTML = html;
+                html += '</tbody></table>'; dutyTableEl.innerHTML = html;
             }
 
             setTimeout(() => {
@@ -1348,7 +1348,7 @@
                     let gradePlayers = teamMembers.filter(m => m.role === 'player' && m.grade === grade); if(gradePlayers.length === 0) return;
                     const card = document.createElement('div'); card.className = "bg-slate-50 border border-slate-200 rounded-xl p-3";
                     card.innerHTML = `<h4 class="text-xs font-black text-blue-900 mb-2">⚾ ${grade}年生</h4>`;
-                    let pHtml = `<div id="att-scroll-player-${grade}" class="overflow-x-auto max-h-[500px] border rounded-xl shadow-inner -webkit-overflow-scrolling-touch"><table class="min-w-max w-full text-left border-collapse text-xs bg-white"><thead><tr class="bg-slate-100 border-b text-slate-700"><th class="p-2.5 font-black sticky left-0 top-0 z-30 bg-slate-100 shadow-sm whitespace-nowrap">選手名</th>`;
+                    let pHtml = `<div id="att-scroll-player-${grade}" class="overflow-auto max-h-[500px] border rounded-xl shadow-inner -webkit-overflow-scrolling-touch"><table class="min-w-max w-full text-left border-collapse text-xs bg-white"><thead><tr class="bg-slate-100 border-b text-slate-700"><th class="p-2.5 font-black sticky left-0 top-0 z-30 bg-slate-100 shadow-sm whitespace-nowrap">選手名</th>`;
                     targetSchedules.forEach(s => { pHtml += `<th class="p-2.5 text-center whitespace-nowrap sticky top-0 z-20 bg-slate-100 border-l">${formatDateWithDay(s.date)}</th>`; });
                     pHtml += '<th class="p-2.5 text-center sticky top-0 z-20 bg-slate-200 border-l font-bold whitespace-nowrap">備考</th></tr></thead><tbody class="bg-white divide-y">';
                     gradePlayers.forEach(m => {
@@ -1367,7 +1367,7 @@
             }
 
             if(parentContainerEl) {
-                let pHtml = '<div id="att-scroll-parent-list" class="overflow-x-auto max-h-[500px] border rounded-xl shadow-inner -webkit-overflow-scrolling-touch"><table class="min-w-max w-full text-left border-collapse text-xs bg-white"><thead><tr class="bg-slate-100 border-b text-slate-700"><th class="p-2.5 font-black sticky left-0 top-0 z-30 bg-slate-100 shadow-sm whitespace-nowrap">保護者・スタッフ名</th>';
+                let pHtml = '<div id="att-scroll-parent-list" class="overflow-auto max-h-[500px] border rounded-xl shadow-inner -webkit-overflow-scrolling-touch"><table class="min-w-max w-full text-left border-collapse text-xs bg-white"><thead><tr class="bg-slate-100 border-b text-slate-700"><th class="p-2.5 font-black sticky left-0 top-0 z-30 bg-slate-100 shadow-sm whitespace-nowrap">保護者・スタッフ名</th>';
                 targetSchedules.forEach(s => { pHtml += `<th class="p-2.5 text-center whitespace-nowrap sticky top-0 z-20 bg-slate-100 border-l">${formatDateWithDay(s.date)}</th>`; });
                 pHtml += '<th class="p-2.5 text-center sticky top-0 z-20 bg-slate-200 border-l font-bold whitespace-nowrap">備考</th></tr></thead><tbody class="bg-white divide-y">';
                 parentsStaff.forEach(m => {
@@ -1399,7 +1399,7 @@
                 const teamMasterCars = (window.appData.masterCars || []).filter(mc => mc.teams && mc.teams.includes(currentTeamKey));
                 if(teamMasterCars.length === 0) { carTableEl.innerHTML = '<div class="text-xs text-slate-400 text-center py-4">登録車両がありません</div>'; }
                 else {
-                    let cHtml = '<div class="overflow-x-auto w-full border rounded-xl shadow-inner -webkit-overflow-scrolling-touch"><table class="min-w-max w-full text-left border-collapse text-xs bg-white"><thead><tr class="bg-slate-100 border-b text-slate-700"><th class="p-2.5 font-black sticky left-0 top-0 z-30 bg-slate-100 shadow-sm whitespace-nowrap">車両</th>';
+                    let cHtml = '<table class="min-w-max w-full text-left border-collapse text-xs bg-white"><thead><tr class="bg-slate-100 border-b text-slate-700"><th class="p-2.5 font-black sticky left-0 top-0 z-30 bg-slate-100 shadow-sm whitespace-nowrap">車両</th>';
                     targetSchedules.forEach(s => { cHtml += `<th class="p-2.5 text-center whitespace-nowrap sticky top-0 z-20 bg-slate-100 border-l">${formatDateWithDay(s.date)}</th>`; });
                     cHtml += '</tr></thead><tbody class="divide-y">';
                     teamMasterCars.forEach(car => {
@@ -1411,7 +1411,7 @@
                         });
                         cHtml += '</tr>';
                     });
-                    cHtml += '</tbody></table></div>'; carTableEl.innerHTML = cHtml;
+                    cHtml += '</tbody></table>'; carTableEl.innerHTML = cHtml;
                 }
             }
 
@@ -2840,5 +2840,6 @@
             }
             window.updateMonthlyDutySummary();
         }
-    </script><body>
+    </script>
+<body>
 <html>

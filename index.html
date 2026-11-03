@@ -300,7 +300,8 @@
                             <button type="button" onclick="window.copyToTripFrom()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-2 py-2 rounded-xl text-[11px] sm:text-xs transition shadow flex justify-center items-center">📋 往路→復路</button>
                             <button type="button" onclick="window.copyToTripTo()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold px-2 py-2 rounded-xl text-[11px] sm:text-xs transition shadow flex justify-center items-center">📋 復路→往路</button>
                         </div>
-                        <button type="button" onclick="window.openLineCopyModal()" class="w-full sm:w-auto bg-teal-600 hover:bg-teal-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition shadow flex justify-center items-center">📱 個別LINE出力</button>
+                        <!-- ★ 修正済みのボタン（配車LINE出力） -->
+                        <button type="button" onclick="window.openLineCopyModal()" class="w-full sm:w-auto bg-teal-600 hover:bg-teal-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition shadow flex justify-center items-center">📱 配車LINE出力</button>
                     </div>
                 </div>
             </div>
@@ -465,7 +466,8 @@
                 <textarea id="line-copy-textarea" class="w-full flex-1 bg-slate-50 border border-slate-300 rounded-lg p-3 text-xs outline-none resize-none shadow-inner leading-relaxed font-mono"></textarea>
             </div>
             <div class="flex gap-2 pt-2" id="line-copy-action-buttons">
-                <button type="button" onclick="window.generateLineTextForEdit()" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-bold py-2.5 rounded-xl text-sm transition shadow flex justify-center items-center gap-1">🔄 テキストを生成する</button>
+                <!-- ★ 修正済みのモーダル内ボタン（クリップボードにコピー） -->
+                <button type="button" onclick="window.copyLineText()" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-bold py-2.5 rounded-xl text-sm transition shadow flex justify-center items-center gap-1">📋 クリップボードにコピー</button>
                 <button type="button" onclick="window.closeLineCopyModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2.5 rounded-xl text-xs transition">キャンセル</button>
             </div>
         </div>
@@ -1518,7 +1520,32 @@
             window.generateLineTextForEdit();
             document.getElementById('line-copy-modal').classList.remove('hidden'); document.getElementById('line-copy-modal').classList.add('flex');
         };
+        
         window.closeLineCopyModal = function() { document.getElementById('line-copy-modal').classList.add('hidden'); document.getElementById('line-copy-modal').classList.remove('flex'); };
+
+        // ★新規追加: ワンクリックでクリップボードにコピーする関数
+        window.copyLineText = function() {
+            const text = window.buildLineText();
+            if (!text) return;
+
+            // クリップボードAPIが使える場合は直接コピー
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(text.trim()).then(() => {
+                    alert('配車LINEテキストをクリップボードにコピーしました！');
+                }).catch(err => {
+                    console.error('コピー失敗:', err);
+                });
+            } else {
+                // 古いブラウザ用のフォールバック処理
+                const ta = document.getElementById('line-copy-textarea');
+                if (ta) {
+                    ta.value = text.trim();
+                    ta.select();
+                    document.execCommand('copy');
+                    alert('配車LINEテキストをクリップボードにコピーしました！');
+                }
+            }
+        };
 
         window.openMonthlyDutyLineModal = function() {
             const team = window.appData.teams[window.appData.currentTeam]; const monthSchedules = getFilteredSchedulesForCurrentMonth();
@@ -2125,7 +2152,6 @@
             const localFallback = loadFromLocalStorage();
             window.appData = localFallback ? localFallback : JSON.parse(JSON.stringify(defaultData));
             
-            // ★ページ読み込み時は必ず「出欠管理」タブからスタートさせる
             window.appData.currentTab = 'attendance';
             
             applyDataIntegrityChecks();
@@ -2148,7 +2174,6 @@
                 const st = document.getElementById('sync-status');
                 
                 if (data) {
-                    // ★他人の操作で自分の見ているタブが勝手に切り替わらないよう、現在のUI状態を退避
                     const currentUIState = {
                         currentTab: window.appData ? window.appData.currentTab : 'attendance',
                         currentTeam: window.appData ? window.appData.currentTeam : 'A',
@@ -2159,8 +2184,6 @@
                     };
 
                     window.appData = data;
-                    
-                    // ★データ受信後、退避したUI状態を復元（データだけ更新し、タブの表示は維持）
                     Object.assign(window.appData, currentUIState);
 
                     applyDataIntegrityChecks();

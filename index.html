@@ -538,6 +538,7 @@
         const defaultData = {
             currentTeam: 'A', currentTab: 'attendance', currentTrip: 'to', scheduleSubTab: 'transport',
             currentPublicMonth: '', currentScheduleMonth: '', memberRoleTab: 'player', attendanceSubTab: 'player', logoUrl: '', lastLineCopyUrl: '',
+            showPastDates: false, // 過去日表示フラグ初期値
             members: [], masterCars: [],
             teams: {
                 A: { currentScheduleId: '', schedules: [], attendanceData: {}, parentAttendanceData: {}, carAttendanceData: {}, dutyData: {}, monthlySettings: {} },
@@ -559,6 +560,7 @@
             if(!window.appData.members) window.appData.members = [];
             if(!window.appData.masterCars) window.appData.masterCars = [];
             if(!window.appData.attendanceSubTab) window.appData.attendanceSubTab = 'player';
+            if(window.appData.showPastDates === undefined) window.appData.showPastDates = false;
             if(window.appData.logoUrl === undefined) window.appData.logoUrl = '';
             if(window.appData.lastLineCopyUrl === undefined) window.appData.lastLineCopyUrl = '';
             if(!window.appData.teams) window.appData.teams = JSON.parse(JSON.stringify(defaultData.teams));
@@ -1008,6 +1010,11 @@
         window.switchAttendanceMonth = function(mKey) { window.appData.currentPublicMonth = mKey; if (typeof window.renderApp === 'function') window.renderApp(); };
         window.switchAttendanceSubTab = function(subTab) { window.appData.attendanceSubTab = subTab; if (typeof window.renderApp === 'function') window.renderApp(); };
         
+        window.togglePastDates = function(isChecked) {
+            window.appData.showPastDates = isChecked;
+            if (typeof window.renderApp === 'function') window.renderApp();
+        };
+
         window.updateMonthlySetting = function(field, val) {
             const team = window.appData.teams[window.appData.currentTeam];
             const currentMonth = window.appData.currentPublicMonth;
@@ -1085,13 +1092,18 @@
             const targetAllSchedules = (team.schedules || []);
             let monthlyGroups = {}; 
             targetAllSchedules.forEach(s => { if(s.date && s.date.length >= 7) { const mKey = s.date.slice(0, 7); if(!monthlyGroups[mKey]) monthlyGroups[mKey] = []; monthlyGroups[mKey].push(s); } });
-            const currentMonth = window.appData.currentPublicMonth; const targetSchedules = monthlyGroups[currentMonth] || [];
+            
+            const todayStr = new Date().toISOString().split('T')[0];
+            const currentMonth = window.appData.currentPublicMonth; 
+            const showPast = !!window.appData.showPastDates;
+            const targetSchedules = (monthlyGroups[currentMonth] || []).filter(s => showPast || s.date >= todayStr);
+            
             const teamMembers = (window.appData.members || []).filter(m => m.teams && m.teams.includes(currentTeam) && !m.isKyubu);
             let parentsStaff = teamMembers.filter(m => m.role === 'parent' || m.role === 'staff' || m.role === 'family');
             sortParentsStaff(parentsStaff);
 
-            if(parentsStaff.length === 0) { 
-                dutyTableEl.innerHTML = '<div class="text-xs text-slate-400 text-center py-4">該当メンバーがいません</div>'; 
+            if(parentsStaff.length === 0 || targetSchedules.length === 0) { 
+                dutyTableEl.innerHTML = '<div class="text-xs text-slate-400 text-center py-4">表示対象の日程がありません</div>'; 
             } else {
                 let html = '<table class="min-w-max w-full text-left border-collapse text-xs bg-white"><thead><tr class="bg-slate-100 text-slate-700 border-b"><th class="p-2.5 font-black sticky left-0 top-0 z-30 bg-slate-100 shadow-sm whitespace-nowrap">氏名</th>';
                 targetSchedules.forEach(s => { html += `<th class="p-2.5 font-bold text-center whitespace-nowrap sticky top-0 z-20 bg-slate-100 border-l">${formatDateWithDay(s.date)}<br><span class="text-[10px] text-blue-600 font-normal truncate">${s.destination || ''}</span></th>`; });
@@ -1169,7 +1181,11 @@
 
             let monthlyGroups = {}; targetAllSchedules.forEach(s => { if(s.date && s.date.length >= 7) { const mKey = s.date.slice(0, 7); if(!monthlyGroups[mKey]) monthlyGroups[mKey] = []; monthlyGroups[mKey].push(s); } });
             const monthKeys = Object.keys(monthlyGroups).sort(); if(!window.appData.currentPublicMonth || !monthKeys.includes(window.appData.currentPublicMonth)) window.appData.currentPublicMonth = monthKeys[monthKeys.length - 1];
-            const currentMonth = window.appData.currentPublicMonth; const targetSchedules = monthlyGroups[currentMonth] || [];
+            const currentMonth = window.appData.currentPublicMonth; 
+
+            const todayStr = new Date().toISOString().split('T')[0];
+            const showPast = !!window.appData.showPastDates;
+            const targetSchedules = (monthlyGroups[currentMonth] || []).filter(s => showPast || s.date >= todayStr);
 
             monthTabsEl.innerHTML = '';
             monthKeys.forEach(mKey => {
@@ -1179,51 +1195,65 @@
                 btn.textContent = `${parts[0]}年${parseInt(parts[1])}月`; monthTabsEl.appendChild(btn);
             });
 
+            // 過去日表示トグルスイッチの追加・更新
+            const toggleWrapper = document.createElement('label');
+            toggleWrapper.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200 cursor-pointer hover:bg-slate-200 transition ml-auto whitespace-nowrap";
+            toggleWrapper.innerHTML = `<input type="checkbox" onchange="window.togglePastDates(this.checked)" ${showPast ? 'checked' : ''} class="w-4 h-4 rounded text-emerald-600"> 過去日も表示`;
+            monthTabsEl.appendChild(toggleWrapper);
+
             const teamMembers = (window.appData.members || []).filter(m => m.teams && m.teams.includes(currentTeam) && !m.isKyubu);
             let parentsStaff = teamMembers.filter(m => m.role === 'parent' || m.role === 'staff' || m.role === 'family');
             sortParentsStaff(parentsStaff);
 
             if(playerContainerEl) {
                 playerContainerEl.innerHTML = '';
-                ['6', '5', '4', '3', '2', '1'].forEach(grade => {
-                    let gradePlayers = teamMembers.filter(m => m.role === 'player' && m.grade === grade); if(gradePlayers.length === 0) return;
-                    const card = document.createElement('div'); card.className = "bg-slate-50 border border-slate-200 rounded-xl p-3";
-                    card.innerHTML = `<h4 class="text-xs font-black text-blue-900 mb-2">⚾ ${grade}年生</h4>`;
-                    let pHtml = `<div id="att-scroll-player-${grade}" class="overflow-auto max-h-[500px] border rounded-xl shadow-inner -webkit-overflow-scrolling-touch"><table class="min-w-max w-full text-left border-collapse text-xs bg-white"><thead><tr class="bg-slate-100 border-b text-slate-700"><th class="p-2.5 font-black sticky left-0 top-0 z-30 bg-slate-100 shadow-sm whitespace-nowrap">選手名</th>`;
-                    targetSchedules.forEach(s => { pHtml += `<th class="p-2.5 text-center whitespace-nowrap sticky top-0 z-20 bg-slate-100 border-l">${formatDateWithDay(s.date)}</th>`; });
-                    pHtml += '<th class="p-2.5 text-center sticky top-0 z-20 bg-slate-200 border-l font-bold whitespace-nowrap">備考</th></tr></thead><tbody class="bg-white divide-y">';
-                    gradePlayers.forEach(m => {
-                        pHtml += `<tr><td class="p-2.5 font-bold sticky left-0 z-10 bg-white shadow-sm whitespace-nowrap">${m.name}</td>`;
-                        targetSchedules.forEach(s => {
-                            if(!team.attendanceData[s.id]) team.attendanceData[s.id] = {}; if(!team.attendanceData[s.id][m.name]) team.attendanceData[s.id][m.name] = { status: 'all', note: '' };
-                            const curStatus = team.attendanceData[s.id][m.name].status || 'all';
-                            pHtml += `<td class="p-2 text-center border-l whitespace-nowrap"><select onchange="window.updateAttendanceCell('${m.name}', '${s.id}', 'status', this.value, 'player')" class="bg-slate-50 border rounded px-2 py-1.5 text-xs font-bold outline-none shadow-sm"><option value="all" ${curStatus==='all'?'selected':''}>〇 出席</option><option value="absent" ${curStatus==='absent'?'selected':''}>× 欠席</option><option value="am" ${curStatus==='am'?'selected':''}>△ 午前</option><option value="pm" ${curStatus==='pm'?'selected':''}>▲ 午後</option><option value="triangle" ${curStatus==='triangle'?'selected':''}>調整中</option></select></td>`;
+                if(targetSchedules.length === 0) {
+                    playerContainerEl.innerHTML = '<div class="text-xs text-slate-400 text-center py-6">表示対象の日程がありません（過去日を表示するには右上のチェックを入れてください）。</div>';
+                } else {
+                    ['6', '5', '4', '3', '2', '1'].forEach(grade => {
+                        let gradePlayers = teamMembers.filter(m => m.role === 'player' && m.grade === grade); if(gradePlayers.length === 0) return;
+                        const card = document.createElement('div'); card.className = "bg-slate-50 border border-slate-200 rounded-xl p-3";
+                        card.innerHTML = `<h4 class="text-xs font-black text-blue-900 mb-2">⚾ ${grade}年生</h4>`;
+                        let pHtml = `<div id="att-scroll-player-${grade}" class="overflow-auto max-h-[500px] border rounded-xl shadow-inner -webkit-overflow-scrolling-touch"><table class="min-w-max w-full text-left border-collapse text-xs bg-white"><thead><tr class="bg-slate-100 border-b text-slate-700"><th class="p-2.5 font-black sticky left-0 top-0 z-30 bg-slate-100 shadow-sm whitespace-nowrap">選手名</th>`;
+                        targetSchedules.forEach(s => { pHtml += `<th class="p-2.5 text-center whitespace-nowrap sticky top-0 z-20 bg-slate-100 border-l">${formatDateWithDay(s.date)}</th>`; });
+                        pHtml += '<th class="p-2.5 text-center sticky top-0 z-20 bg-slate-200 border-l font-bold whitespace-nowrap">備考</th></tr></thead><tbody class="bg-white divide-y">';
+                        gradePlayers.forEach(m => {
+                            pHtml += `<tr><td class="p-2.5 font-bold sticky left-0 z-10 bg-white shadow-sm whitespace-nowrap">${m.name}</td>`;
+                            targetSchedules.forEach(s => {
+                                if(!team.attendanceData[s.id]) team.attendanceData[s.id] = {}; if(!team.attendanceData[s.id][m.name]) team.attendanceData[s.id][m.name] = { status: 'all', note: '' };
+                                const curStatus = team.attendanceData[s.id][m.name].status || 'all';
+                                pHtml += `<td class="p-2 text-center border-l whitespace-nowrap"><select onchange="window.updateAttendanceCell('${m.name}', '${s.id}', 'status', this.value, 'player')" class="bg-slate-50 border rounded px-2 py-1.5 text-xs font-bold outline-none shadow-sm"><option value="all" ${curStatus==='all'?'selected':''}>〇 出席</option><option value="absent" ${curStatus==='absent'?'selected':''}>× 欠席</option><option value="am" ${curStatus==='am'?'selected':''}>△ 午前</option><option value="pm" ${curStatus==='pm'?'selected':''}>▲ 午後</option><option value="triangle" ${curStatus==='triangle'?'selected':''}>調整中</option></select></td>`;
+                            });
+                            const lastSchedId = targetSchedules.length > 0 ? targetSchedules[targetSchedules.length - 1].id : '';
+                            const noteVal = (lastSchedId && team.attendanceData[lastSchedId] && team.attendanceData[lastSchedId][m.name]) ? (team.attendanceData[lastSchedId][m.name].note || '') : '';
+                            pHtml += `<td class="p-2.5 bg-slate-50/50 text-center border-l whitespace-nowrap"><input type="text" value="${noteVal}" onchange="window.updateNoteCell('${m.name}', '${lastSchedId}', 'player', this.value)" placeholder="自由意見..." class="w-32 bg-white border rounded px-2 py-1 text-xs outline-none"></td></tr>`;
                         });
-                        const lastSchedId = targetSchedules.length > 0 ? targetSchedules[targetSchedules.length - 1].id : '';
-                        const noteVal = (lastSchedId && team.attendanceData[lastSchedId] && team.attendanceData[lastSchedId][m.name]) ? (team.attendanceData[lastSchedId][m.name].note || '') : '';
-                        pHtml += `<td class="p-2.5 bg-slate-50/50 text-center border-l whitespace-nowrap"><input type="text" value="${noteVal}" onchange="window.updateNoteCell('${m.name}', '${lastSchedId}', 'player', this.value)" placeholder="自由意見..." class="w-32 bg-white border rounded px-2 py-1 text-xs outline-none"></td></tr>`;
+                        pHtml += '</tbody></table></div>'; card.innerHTML += pHtml; playerContainerEl.appendChild(card);
                     });
-                    pHtml += '</tbody></table></div>'; card.innerHTML += pHtml; playerContainerEl.appendChild(card);
-                });
+                }
             }
 
             if(parentContainerEl) {
-                let pHtml = '<div id="att-scroll-parent-list" class="overflow-auto max-h-[500px] border rounded-xl shadow-inner -webkit-overflow-scrolling-touch"><table class="min-w-max w-full text-left border-collapse text-xs bg-white"><thead><tr class="bg-slate-100 border-b text-slate-700"><th class="p-2.5 font-black sticky left-0 top-0 z-30 bg-slate-100 shadow-sm whitespace-nowrap">保護者・スタッフ名</th>';
-                targetSchedules.forEach(s => { pHtml += `<th class="p-2.5 text-center whitespace-nowrap sticky top-0 z-20 bg-slate-100 border-l">${formatDateWithDay(s.date)}</th>`; });
-                pHtml += '<th class="p-2.5 text-center sticky top-0 z-20 bg-slate-200 border-l font-bold whitespace-nowrap">備考</th></tr></thead><tbody class="bg-white divide-y">';
-                parentsStaff.forEach(m => {
-                    const labelStr = m.role === 'staff' ? `スタッフ (${m.staffRole})` : (m.role === 'parent' ? `保護者 (${m.grade}年・${m.parentType})` : m.role);
-                    pHtml += `<tr><td class="p-2.5 font-bold sticky left-0 z-10 bg-white shadow-sm whitespace-nowrap">${m.name}<br><span class="text-[10px] text-slate-500 font-normal">${labelStr}</span></td>`;
-                    targetSchedules.forEach(s => {
-                        if(!team.parentAttendanceData) team.parentAttendanceData = {}; if(!team.parentAttendanceData[s.id]) team.parentAttendanceData[s.id] = {}; if(!team.parentAttendanceData[s.id][m.name]) team.parentAttendanceData[s.id][m.name] = { status: 'absent', note: '' };
-                        const curStatus = team.parentAttendanceData[s.id][m.name].status || 'absent';
-                        pHtml += `<td class="p-2 text-center border-l whitespace-nowrap"><select onchange="window.updateAttendanceCell('${m.name}', '${s.id}', 'status', this.value, 'parent')" class="bg-slate-50 border rounded px-2 py-1.5 text-xs font-bold outline-none shadow-sm"><option value="absent" ${curStatus==='absent'?'selected':''}>× 欠席</option><option value="all" ${curStatus==='all'?'selected':''}>〇 出席</option><option value="am" ${curStatus==='am'?'selected':''}>△ 午前</option><option value="pm" ${curStatus==='pm'?'selected':''}>▲ 午後</option><option value="triangle" ${curStatus==='triangle'?'selected':''}>調整中</option></select></td>`;
+                if(targetSchedules.length === 0) {
+                    parentContainerEl.innerHTML = '<div class="text-xs text-slate-400 text-center py-6">表示対象の日程がありません（過去日を表示するには右上のチェックを入れてください）。</div>';
+                } else {
+                    let pHtml = '<div id="att-scroll-parent-list" class="overflow-auto max-h-[500px] border rounded-xl shadow-inner -webkit-overflow-scrolling-touch"><table class="min-w-max w-full text-left border-collapse text-xs bg-white"><thead><tr class="bg-slate-100 border-b text-slate-700"><th class="p-2.5 font-black sticky left-0 top-0 z-30 bg-slate-100 shadow-sm whitespace-nowrap">保護者・スタッフ名</th>';
+                    targetSchedules.forEach(s => { pHtml += `<th class="p-2.5 text-center whitespace-nowrap sticky top-0 z-20 bg-slate-100 border-l">${formatDateWithDay(s.date)}</th>`; });
+                    pHtml += '<th class="p-2.5 text-center sticky top-0 z-20 bg-slate-200 border-l font-bold whitespace-nowrap">備考</th></tr></thead><tbody class="bg-white divide-y">';
+                    parentsStaff.forEach(m => {
+                        const labelStr = m.role === 'staff' ? `スタッフ (${m.staffRole})` : (m.role === 'parent' ? `保護者 (${m.grade}年・${m.parentType})` : m.role);
+                        pHtml += `<tr><td class="p-2.5 font-bold sticky left-0 z-10 bg-white shadow-sm whitespace-nowrap">${m.name}<br><span class="text-[10px] text-slate-500 font-normal">${labelStr}</span></td>`;
+                        targetSchedules.forEach(s => {
+                            if(!team.parentAttendanceData) team.parentAttendanceData = {}; if(!team.parentAttendanceData[s.id]) team.parentAttendanceData[s.id] = {}; if(!team.parentAttendanceData[s.id][m.name]) team.parentAttendanceData[s.id][m.name] = { status: 'absent', note: '' };
+                            const curStatus = team.parentAttendanceData[s.id][m.name].status || 'absent';
+                            pHtml += `<td class="p-2 text-center border-l whitespace-nowrap"><select onchange="window.updateAttendanceCell('${m.name}', '${s.id}', 'status', this.value, 'parent')" class="bg-slate-50 border rounded px-2 py-1.5 text-xs font-bold outline-none shadow-sm"><option value="absent" ${curStatus==='absent'?'selected':''}>× 欠席</option><option value="all" ${curStatus==='all'?'selected':''}>〇 出席</option><option value="am" ${curStatus==='am'?'selected':''}>△ 午前</option><option value="pm" ${curStatus==='pm'?'selected':''}>▲ 午後</option><option value="triangle" ${curStatus==='triangle'?'selected':''}>調整中</option></select></td>`;
+                        });
+                        const lastSchedId = targetSchedules.length > 0 ? targetSchedules[targetSchedules.length - 1].id : '';
+                        const noteVal = (lastSchedId && team.parentAttendanceData && team.parentAttendanceData[lastSchedId] && team.parentAttendanceData[lastSchedId][m.name]) ? (team.parentAttendanceData[lastSchedId][m.name].note || '') : '';
+                        pHtml += `<td class="p-2.5 bg-slate-50/50 text-center border-l whitespace-nowrap"><input type="text" value="${noteVal}" onchange="window.updateNoteCell('${m.name}', '${lastSchedId}', 'parent_att', this.value)" placeholder="自由意見..." class="w-32 bg-white border rounded px-2 py-1 text-xs outline-none"></td></tr>`;
                     });
-                    const lastSchedId = targetSchedules.length > 0 ? targetSchedules[targetSchedules.length - 1].id : '';
-                    const noteVal = (lastSchedId && team.parentAttendanceData && team.parentAttendanceData[lastSchedId] && team.parentAttendanceData[lastSchedId][m.name]) ? (team.parentAttendanceData[lastSchedId][m.name].note || '') : '';
-                    pHtml += `<td class="p-2.5 bg-slate-50/50 text-center border-l whitespace-nowrap"><input type="text" value="${noteVal}" onchange="window.updateNoteCell('${m.name}', '${lastSchedId}', 'parent_att', this.value)" placeholder="自由意見..." class="w-32 bg-white border rounded px-2 py-1 text-xs outline-none"></td></tr>`;
-                });
-                pHtml += '</tbody></table></div>'; parentContainerEl.innerHTML = pHtml;
+                    pHtml += '</tbody></table></div>'; parentContainerEl.innerHTML = pHtml;
+                }
                 
                 if(!team.monthlySettings) team.monthlySettings = {};
                 if(!team.monthlySettings[currentMonth]) team.monthlySettings[currentMonth] = { deadline: '', notes: '' };
@@ -1235,7 +1265,7 @@
 
             if(carTableEl) {
                 const teamMasterCars = (window.appData.masterCars || []).filter(mc => mc.teams && mc.teams.includes(currentTeam));
-                if(teamMasterCars.length === 0) { carTableEl.innerHTML = '<div class="text-xs text-slate-400 text-center py-4">登録車両がありません</div>'; }
+                if(teamMasterCars.length === 0 || targetSchedules.length === 0) { carTableEl.innerHTML = '<div class="text-xs text-slate-400 text-center py-4">表示対象の日程または登録車両がありません</div>'; }
                 else {
                     let cHtml = '<table class="min-w-max w-full text-left border-collapse text-xs bg-white"><thead><tr class="bg-slate-100 border-b text-slate-700"><th class="p-2.5 font-black sticky left-0 top-0 z-30 bg-slate-100 shadow-sm whitespace-nowrap">車両</th>';
                     targetSchedules.forEach(s => { cHtml += `<th class="p-2.5 text-center whitespace-nowrap sticky top-0 z-20 bg-slate-100 border-l">${formatDateWithDay(s.date)}</th>`; });
@@ -1744,7 +1774,6 @@
             document.getElementById('line-copy-textarea').value = text.trim();
         };
 
-        // 優先順位付き自動配車処理（整理・更新版）
         window.autoAssignSeats = function() {
             try {
                 const sched = getCurrentSchedule(); 
@@ -1782,7 +1811,6 @@
                 const masterCars = window.appData.masterCars || [];
                 let assignedNames = new Set(); 
 
-                // 車両の初期化 & ドライバー・固定同乗者の優先割り当て
                 activeCars.forEach(car => {
                     const mc = masterCars.find(m => m.id === car.masterId);
                     const effectiveSeats = car.isGearCar ? Math.max(1, car.capacity - (car.gearSeats || 3)) : car.capacity;
@@ -1807,7 +1835,6 @@
                     }
                 });
 
-                // 自車移動フラグを持つメンバーの除外
                 attendingMembers.forEach(m => {
                     if (m.isSelfTransport && !assignedNames.has(m.name)) {
                         tripData.selfTransport.push(m.name);
@@ -1817,7 +1844,6 @@
 
                 let unassigned = attendingMembers.filter(m => !assignedNames.has(m.name));
                 
-                // 日別の当番・お手伝い割り当てチェックリスト取得
                 const dutyAssignments = sched.dutyAssignments || {};
                 const dutyCheckedNames = new Set();
                 Object.keys(dutyAssignments).forEach(roleKey => {
@@ -1825,17 +1851,11 @@
                     names.forEach(n => dutyCheckedNames.add(n));
                 });
 
-                // 新優先順位ルールによるグループ分け
-                // ① 選手
                 let p1_players = unassigned.filter(m => m.role === 'player');
-                // ② スタッフ
                 let p2_staff = unassigned.filter(m => m.role === 'staff');
-                // ③ 当番・お手伝い割り当て(日別)でチェックが入っている保護者
                 let p3_dutyParents = unassigned.filter(m => m.role === 'parent' && dutyCheckedNames.has(m.name));
-                // ④ 当日出席の保護者、家族
                 let p4_otherParentsFamily = unassigned.filter(m => m.role !== 'player' && m.role !== 'staff' && !p3_dutyParents.some(dp => dp.name === m.name));
 
-                // 各グループ内をシャッフル
                 const shuffleArray = (arr) => {
                     for (let i = arr.length - 1; i > 0; i--) {
                         const j = Math.floor(Math.random() * (i + 1));
@@ -1847,25 +1867,20 @@
                 shuffleArray(p3_dutyParents);
                 shuffleArray(p4_otherParentsFamily);
 
-                // 助手席（座席インデックス1）へ大人（スタッフ・保護者）を優先割り当て
                 let adultsForAssistant = [...p2_staff, ...p3_dutyParents, ...p4_otherParentsFamily];
                 activeCars.forEach(c => {
                     const effectiveSeats = c.isGearCar ? Math.max(1, c.capacity - (c.gearSeats || 3)) : c.capacity;
                     if (effectiveSeats > 1 && c.passengers[1] === null && adultsForAssistant.length > 0) {
                         const assignedAdult = adultsForAssistant.shift();
                         c.passengers[1] = assignedAdult.name;
-                        // 各配列から削除
                         p2_staff = p2_staff.filter(m => m.name !== assignedAdult.name);
                         p3_dutyParents = p3_dutyParents.filter(m => m.name !== assignedAdult.name);
                         p4_otherParentsFamily = p4_otherParentsFamily.filter(m => m.name !== assignedAdult.name);
                     }
                 });
 
-                // 優先順位に沿って最終割り当てキューを統合
-                // ① 選手 -> ② スタッフ -> ③ 当番保護者 -> ④ その他保護者/家族
                 let finalQueue = [...p1_players, ...p2_staff, ...p3_dutyParents, ...p4_otherParentsFamily];
 
-                // 残り空席への順番通りの詰め込み
                 let carIdx = 0;
                 while (finalQueue.length > 0) {
                     let hasSpace = activeCars.some(c => {
@@ -2208,7 +2223,8 @@
                         currentTrip: window.appData ? window.appData.currentTrip : 'to',
                         scheduleSubTab: window.appData ? window.appData.scheduleSubTab : 'transport',
                         attendanceSubTab: window.appData ? window.appData.attendanceSubTab : 'player',
-                        memberRoleTab: window.appData ? window.appData.memberRoleTab : 'player'
+                        memberRoleTab: window.appData ? window.appData.memberRoleTab : 'player',
+                        showPastDates: window.appData ? window.appData.showPastDates : false
                     };
 
                     window.appData = data;

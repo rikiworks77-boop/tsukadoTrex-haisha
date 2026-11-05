@@ -450,13 +450,13 @@
     <div id="line-copy-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-0 sm:p-4 z-50">
         <div class="bg-white w-full sm:w-[600px] h-full sm:h-auto max-h-[100dvh] sm:max-h-[90vh] rounded-none sm:rounded-2xl shadow-2xl overflow-y-auto p-4 sm:p-6 mx-auto space-y-4 flex flex-col">
             <h3 class="text-lg font-black text-blue-900">個別LINE出力</h3>
-            <div id="line-copy-config-area" class="space-y-4 flex-col flex">
+            <div id="line-copy-config-area" class="space-y-4 flex flex-col">
                 <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1">出欠表のURL等（任意・上部に表示されます）</label>
                     <input type="text" id="line-copy-url" placeholder="https://chouseisan.com/..." class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none">
                 </div>
                 <div class="overflow-y-auto border border-slate-200 rounded-xl p-3 bg-slate-50 max-h-56">
-                    <label class="block text-xs font-bold text-slate-600 mb-2">出力対象のスケジュール（現在の月の予定）</label>
+                    <label class="block text-xs font-bold text-slate-600 mb-2">出力対象のスケジュール（現在表示中の月と、その前後1ヶ月）</label>
                     <div id="line-copy-sched-list" class="space-y-1.5"></div>
                 </div>
             </div>
@@ -465,7 +465,7 @@
                 <textarea id="line-copy-textarea" class="w-full flex-1 bg-slate-50 border border-slate-300 rounded-lg p-3 text-xs outline-none resize-none shadow-inner leading-relaxed font-mono"></textarea>
             </div>
             <div class="flex gap-2 pt-2" id="line-copy-action-buttons">
-                <button type="button" onclick="window.generateLineTextForEdit()" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-bold py-2.5 rounded-xl text-sm transition shadow flex justify-center items-center gap-1">📋 クリップボードにコピー</button>
+                <button type="button" id="btn-generate-line" onclick="window.generateLineTextForEdit()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-sm transition shadow flex justify-center items-center gap-1">テキストを生成する</button><button type="button" id="btn-copy-line" onclick="window.copyLineText()" class="hidden flex-1 bg-teal-600 hover:bg-teal-700 text-white font-bold py-2.5 rounded-xl text-sm transition shadow flex justify-center items-center gap-1">📋 クリップボードにコピー</button>
                 <button type="button" onclick="window.closeLineCopyModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2.5 rounded-xl text-xs transition">キャンセル</button>
             </div>
         </div>
@@ -484,12 +484,11 @@
             </div>
         </div>
     </div>
+
 <script type="module">
-        // 1. Firebaseモジュールの読み込み
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
         import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
 
-        // 2. 共通関数
         function formatDateWithDay(dateString) {
             if (!dateString) return '';
             const d = new Date(dateString);
@@ -523,7 +522,6 @@
             });
         }
 
-        // 3. 設定と初期データ
         const firebaseConfig = {
             apiKey: "AIzaSyAslbHA8YqDEsbWMhJPWD4Yf_38YA19Ies",
             authDomain: "tsukado-trex.firebaseapp.com",
@@ -538,7 +536,7 @@
         const defaultData = {
             currentTeam: 'A', currentTab: 'attendance', currentTrip: 'to', scheduleSubTab: 'transport',
             currentPublicMonth: '', currentScheduleMonth: '', memberRoleTab: 'player', attendanceSubTab: 'player', logoUrl: '', lastLineCopyUrl: '',
-            showPastDates: false, // 過去日表示フラグ初期値
+            showPastDates: false,
             members: [], masterCars: [],
             teams: {
                 A: { currentScheduleId: '', schedules: [], attendanceData: {}, parentAttendanceData: {}, carAttendanceData: {}, dutyData: {}, monthlySettings: {} },
@@ -620,7 +618,6 @@
             return clean;
         }
 
-        // 4. グローバル関数の定義
         window.triggerUpdate = async function() {
             isLocalChange = true; applyDataIntegrityChecks(); saveToLocalStorage(window.appData);
             const st = document.getElementById('sync-status'); if(st) st.textContent = '💾 保存中...';
@@ -758,7 +755,12 @@
         window.deleteSpecifiedMonthSchedules = function() {
             const y = parseInt(document.getElementById('auto-fill-year').value); const m = parseInt(document.getElementById('auto-fill-month').value);
             if(!y || !m) return; const mKey = `${y}-${String(m).padStart(2, '0')}`;
-            if(!confirm(`${y}年${m}月の日程を一括削除しますか？\n（この操作は取り消せません）`)) return;
+            const pwd = prompt(`${y}年${m}月の日程を一括削除します。\n実行する場合はパスワードを入力してください。`);
+            if (pwd !== 'trex121212') {
+                if (pwd !== null) alert('パスワードが間違っています。操作をキャンセルしました。');
+                return;
+            }
+            if(!confirm(`本当に${y}年${m}月の日程を一括削除してよろしいですか？\n（この操作は取り消せません）`)) return;
             const team = window.appData.teams[window.appData.currentTeam]; if (!team.schedules) return;
             const initialCount = team.schedules.length; team.schedules = team.schedules.filter(s => !s.date || !s.date.startsWith(mKey));
             const deletedCount = initialCount - team.schedules.length;
@@ -1195,7 +1197,6 @@
                 btn.textContent = `${parts[0]}年${parseInt(parts[1])}月`; monthTabsEl.appendChild(btn);
             });
 
-            // 過去日表示トグルスイッチの追加・更新
             const toggleWrapper = document.createElement('label');
             toggleWrapper.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200 cursor-pointer hover:bg-slate-200 transition ml-auto whitespace-nowrap";
             toggleWrapper.innerHTML = `<input type="checkbox" onchange="window.togglePastDates(this.checked)" ${showPast ? 'checked' : ''} class="w-4 h-4 rounded text-emerald-600"> 過去日も表示`;
@@ -1536,19 +1537,35 @@
 
         window.openLineCopyModal = function() {
             const listEl = document.getElementById('line-copy-sched-list'); listEl.innerHTML = '';
-            const monthSchedules = getFilteredSchedulesForCurrentMonth();
-            if (monthSchedules.length === 0) { listEl.innerHTML = '<div class="text-xs text-slate-400 p-2">この月のスケジュールがありません</div>'; } 
+            const team = window.appData.teams[window.appData.currentTeam];
+            const currentMonthStr = window.appData.currentScheduleMonth;
+            let targetSchedules = [];
+            if (currentMonthStr) {
+                const [yStr, mStr] = currentMonthStr.split('-');
+                const y = parseInt(yStr, 10); const m = parseInt(mStr, 10);
+                const prevM = m === 1 ? 12 : m - 1; const prevY = m === 1 ? y - 1 : y;
+                const nextM = m === 12 ? 1 : m + 1; const nextY = m === 12 ? y + 1 : y;
+                const allowedMonths = [
+                    `${prevY}-${String(prevM).padStart(2, '0')}`,
+                    currentMonthStr,
+                    `${nextY}-${String(nextM).padStart(2, '0')}`
+                ];
+                targetSchedules = (team.schedules || []).filter(s => s.date && allowedMonths.includes(s.date.slice(0, 7)));
+            } else {
+                targetSchedules = getFilteredSchedulesForCurrentMonth();
+            }
+            targetSchedules.sort((a, b) => a.date.localeCompare(b.date));
+            if (targetSchedules.length === 0) { listEl.innerHTML = '<div class="text-xs text-slate-400 p-2">対象のスケジュールがありません</div>'; } 
             else {
-                monthSchedules.forEach(s => {
+                targetSchedules.forEach(s => {
                     const isCurrent = s.id === window.appData.teams[window.appData.currentTeam].currentScheduleId; const dateObj = new Date(s.date); const days = ['日', '月', '火', '水', '木', '金', '土']; const dateStr = `${dateObj.getMonth()+1}/${dateObj.getDate()}(${days[dateObj.getDay()]})`;
                     listEl.innerHTML += `<label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer bg-white hover:bg-blue-50 transition shadow-sm"><input type="checkbox" value="${s.id}" class="line-copy-sched-cb w-5 h-5 rounded text-emerald-600" ${isCurrent ? 'checked' : ''}><span class="text-sm font-black text-slate-700">${dateStr} - ${s.destination || '無題'}</span></label>`;
                 });
             }
             document.getElementById('line-copy-url').value = window.appData.lastLineCopyUrl || '';
-            const editArea = document.getElementById('line-copy-edit-area'); editArea.classList.remove('hidden'); editArea.classList.add('flex');
-            document.getElementById('line-copy-config-area').classList.add('hidden'); document.getElementById('line-copy-config-area').classList.remove('flex');
-            window.generateLineTextForEdit();
-            document.getElementById('line-copy-modal').classList.remove('hidden'); document.getElementById('line-copy-modal').classList.add('flex');
+            const editArea = document.getElementById('line-copy-edit-area'); editArea.classList.add('hidden'); editArea.classList.remove('flex');
+            document.getElementById('line-copy-config-area').classList.remove('hidden'); document.getElementById('line-copy-config-area').classList.add('flex');
+            document.getElementById('btn-generate-line').classList.remove('hidden'); document.getElementById('btn-generate-line').classList.add('flex'); document.getElementById('btn-copy-line').classList.add('hidden'); document.getElementById('btn-copy-line').classList.remove('flex'); document.getElementById('line-copy-modal').classList.remove('hidden'); document.getElementById('line-copy-modal').classList.add('flex');
         };
         
         window.closeLineCopyModal = function() { document.getElementById('line-copy-modal').classList.add('hidden'); document.getElementById('line-copy-modal').classList.remove('flex'); };
@@ -1665,55 +1682,118 @@
         }
 
         window.buildLineText = function() {
-            const url = document.getElementById('line-copy-url').value.trim(); window.appData.lastLineCopyUrl = url;
-            const cbs = document.querySelectorAll('.line-copy-sched-cb:checked'); const selectedIds = Array.from(cbs).map(cb => cb.value);
-            if (selectedIds.length === 0) { alert('出力対象のスケジュールを選択してください。'); return null; }
-            const team = window.appData.teams[window.appData.currentTeam]; const teamMembers = (window.appData.members || []).filter(m => m.teams && m.teams.includes(window.appData.currentTeam) && !m.isKyubu);
-            const lastNameCounts = {}; const getLastName = (name) => { if (!name) return ""; return name.trim().split(/[\s ]+/)[0]; };
-            teamMembers.filter(m => m.role === 'player').forEach(m => { const ln = getLastName(m.name); lastNameCounts[ln] = (lastNameCounts[ln] || 0) + 1; });
+            const url = document.getElementById('line-copy-url').value.trim(); 
+            window.appData.lastLineCopyUrl = url;
+            const cbs = document.querySelectorAll('.line-copy-sched-cb:checked'); 
+            const selectedIds = Array.from(cbs).map(cb => cb.value);
+            
+            if (selectedIds.length === 0) { 
+                alert('出力対象のスケジュールを選択してください。'); 
+                return null; 
+            }
+            
+            const team = window.appData.teams[window.appData.currentTeam]; 
+            const teamMembers = (window.appData.members || []).filter(m => m.teams && m.teams.includes(window.appData.currentTeam) && !m.isKyubu);
+            const lastNameCounts = {}; 
+            const getLastName = (name) => { if (!name) return ""; return name.trim().split(/[\s ]+/)[0]; };
+            
+            teamMembers.filter(m => m.role === 'player').forEach(m => { 
+                const ln = getLastName(m.name); 
+                lastNameCounts[ln] = (lastNameCounts[ln] || 0) + 1; 
+            });
+            
             const getFormattedNameForLine = (name) => {
-                if (!name) return ""; const m = teamMembers.find(mem => mem.name === name); if (!m) return getLastName(name);
+                if (!name) return ""; 
+                const m = teamMembers.find(mem => mem.name === name); 
+                if (!m) return getLastName(name);
                 const ln = getLastName(name);
-                if (m.role === 'player') { return lastNameCounts[ln] > 1 ? name : ln; }
-                else if (m.role === 'staff') { if (ln.includes(m.staffRole)) return ln; return `${ln}${m.staffRole}`; }
-                else if (m.role === 'parent') { if (ln.includes(m.parentType)) return ln; return `${ln}${m.parentType}`; }
+                if (m.role === 'player') { 
+                    return lastNameCounts[ln] > 1 ? name : ln; 
+                } else if (m.role === 'staff') { 
+                    if (ln.includes(m.staffRole)) return ln; 
+                    return `${ln}${m.staffRole}`; 
+                } else if (m.role === 'parent') { 
+                    if (ln.includes(m.parentType)) return ln; 
+                    return `${ln}${m.parentType}`; 
+                }
                 return ln;
             };
 
-            let text = ''; const days = ['日', '月', '火', '水', '木', '金', '土']; const kyubuMembers = (window.appData.members || []).filter(m => m.teams && m.teams.includes(window.appData.currentTeam) && m.isKyubu);
+            const days = ['日', '月', '火', '水', '木', '金', '土']; 
+            const kyubuMembers = (window.appData.members || []).filter(m => m.teams && m.teams.includes(window.appData.currentTeam) && m.isKyubu);
 
-            selectedIds.forEach((schedId, idx) => {
-                const sched = team.schedules.find(s => s.id === schedId); if (!sched) return;
-                if (idx > 0) text += '\n--------------------\n\n';
-                const dateObj = new Date(sched.date); const dateStr = `${dateObj.getMonth() + 1}月${dateObj.getDate()}日（${days[dateObj.getDay()]}）`;
-                text += `${dateStr}\n`;
+            const selectedScheds = selectedIds.map(id => team.schedules.find(s => s.id === id)).filter(Boolean);
+            selectedScheds.sort((a, b) => a.date.localeCompare(b.date));
+
+            let lastMonth = null;
+            const dateHeaders = selectedScheds.map(s => {
+                const dateObj = new Date(s.date);
+                const m = dateObj.getMonth() + 1;
+                const d = dateObj.getDate();
+                const dayStr = days[dateObj.getDay()];
+                if (m === lastMonth) {
+                    return `${d}日（${dayStr}）`;
+                } else {
+                    lastMonth = m;
+                    return `${m}月${d}日（${dayStr}）`;
+                }
+            });
+            
+            let text = `【${dateHeaders.join('、')} のお手伝いが決定しました。】\nいつもお手伝いのご協力ありがとうございます。\n\n`;
+
+            selectedScheds.forEach((sched, idx) => {
+                if (idx > 0) text += '\n━━━━━━━━━━━━━━━━━━━━\n\n';
                 
+                const isBike = sched.transportMode === 'bike';
+                const isTripEq = isTripEqual(sched.tripTo, sched.tripFrom, sched.transportMode);
+
+                const dateObj = new Date(sched.date);
+                const dateStr = `${dateObj.getMonth() + 1}月${dateObj.getDate()}日（${days[dateObj.getDay()]}）`;
+                text += `〈 ${dateStr} 〉\n`;
+
                 (sched.dutyRoles || []).forEach(role => {
                     const assigned = sched.dutyAssignments?.[role] || [];
                     const asStr = assigned.length > 0 ? assigned.map(mName => {
-                        const formatted = getFormattedNameForLine(mName); const dutyDetail = team.dutyData?.[sched.id]?.[mName]?.roles?.[role];
-                        let prefixSuffix = ''; if (dutyDetail === '午前') prefixSuffix = '△'; else if (dutyDetail === '午後') prefixSuffix = '▲';
+                        const formatted = getFormattedNameForLine(mName); 
+                        const dutyDetail = team.dutyData?.[sched.id]?.[mName]?.roles?.[role];
+                        let prefixSuffix = ''; 
+                        if (dutyDetail === '午前') prefixSuffix = '△'; 
+                        else if (dutyDetail === '午後') prefixSuffix = '▲';
                         return prefixSuffix ? `${prefixSuffix}${formatted}` : formatted;
                     }).join('・') : '未定';
                     text += `${role}/${asStr}\n`;
                 });
                 
-                const isBike = sched.transportMode === 'bike'; const isTripEq = isTripEqual(sched.tripTo, sched.tripFrom, sched.transportMode);
-                const buildTripText = (tripData, labelPrefix = '') => {
-                    let t = ''; const gearCars = (tripData.cars || []).filter(c => c.isActive && c.isGearCar);
-                    if (gearCars.length > 0) { t += `\n◆ 道具車${labelPrefix} ◆\n`; gearCars.forEach(c => { const carName = c.owner.endsWith('号') ? c.owner : c.owner + '号'; t += `${carName}\n`; }); }
+                const buildTripText = (tripData) => {
+                    let t = ''; 
+                    const gearCars = (tripData.cars || []).filter(c => c.isActive && c.isGearCar);
+                    if (gearCars.length > 0) { 
+                        t += `\n◆ 道具車 ◆\n`; 
+                        gearCars.forEach(c => { 
+                            const carName = c.owner.endsWith('号') ? c.owner : c.owner + '号'; 
+                            t += `${carName}\n`; 
+                        }); 
+                    }
+                    
                     if (isBike) {
                         const bs = tripData.bikeSettings || {}; 
-                        const useConvoy = bs.useConvoy || false;
+                        const isConvoySet = bs.useConvoy || false;
+                        
+                        t += `\n◆ 自転車移動について\n`;
+                        if (!isConvoySet) {
+                            t += `・配列は決めませんが、入団時期が新しい選手は前になります。\n`;
+                        }
+                        t += `・子供2～3人で大人が1人入ってください。\n`;
+                        t += `・お手伝いに入っていない方も、引率可能な方はご協力をお願いいたします。\n`;
+
                         const grades = ['6', '5', '4', '3', '2', '1']; 
                         
                         grades.forEach(g => {
                             const orderList = bs.convoyOrder?.[g] || [];
                             const gradePlayers = teamMembers.filter(m => m.role === 'player' && m.grade === g);
-                            if(gradePlayers.length === 0 && orderList.length === 0) return;
+                            if (gradePlayers.length === 0 && orderList.length === 0) return;
 
                             const leader = bs.leaders?.[g] || '未定';
-                            
                             const dutyCheckedEscorts = sched.dutyAssignments?.['自転車引率'] || [];
                             const validEscorts = (bs.escorts?.[g] || []).filter(name => dutyCheckedEscorts.includes(name));
                             const escortStr = validEscorts.length > 0 ? validEscorts.map(getFormattedNameForLine).join('・') : '未定';
@@ -1722,22 +1802,30 @@
                             t += `〇 先導/${leader !== '未定' ? getFormattedNameForLine(leader) : '未定'}\n`;
                             t += `引率→${escortStr}\n`;
 
-                            if (useConvoy && orderList.length > 0) {
+                            if (isConvoySet && orderList.length > 0) {
                                 t += `\n`;
                                 orderList.forEach((playerName, pIdx) => {
                                     t += `${pIdx + 1}. ${getFormattedNameForLine(playerName)}\n`;
                                 });
                             }
-                            t += `\n`;
                         });
+                        t += `\n`;
                     } else {
                         const movingCars = (tripData.cars || []).filter(c => c.isActive && !c.isGearCar);
                         if (movingCars.length > 0) {
-                            t += `\n移動車${labelPrefix}\n`;
+                            t += `\n◆ 移動車 ◆\n`;
                             movingCars.forEach(c => {
-                                const effSeats = c.capacity; const pass = (c.passengers || []).slice(0, effSeats); const emptyCount = pass.filter(p => !p).length;
-                                let seatItems = pass.filter(p => p).map(getFormattedNameForLine); for(let i=0; i<emptyCount; i++) seatItems.push('🔵');
-                                const passStr = seatItems.join('・'); const carName = c.owner.endsWith('号') ? c.owner : c.owner + '号';
+                                const effSeats = c.capacity; 
+                                let seatItems = [];
+                                for (let i = 0; i < effSeats; i++) {
+                                    if (c.passengers && c.passengers[i]) {
+                                        seatItems.push(getFormattedNameForLine(c.passengers[i]));
+                                    } else {
+                                        seatItems.push('🔵');
+                                    }
+                                }
+                                const passStr = seatItems.join('・'); 
+                                const carName = c.owner.endsWith('号') ? c.owner : c.owner + '号';
                                 t += `●${carName}／${passStr}\n`;
                             });
                         }
@@ -1745,33 +1833,53 @@
                     return t;
                 };
                 
-                if (isTripEq) { text += buildTripText(sched.tripTo, ''); } else { text += buildTripText(sched.tripTo, '（行き）'); text += buildTripText(sched.tripFrom, '（帰り）'); }
+                if (isTripEq) { 
+                    text += buildTripText(sched.tripTo); 
+                } else { 
+                    text += `\n≪往路≫`;
+                    text += buildTripText(sched.tripTo); 
+                    text += `\n≪復路≫`;
+                    text += buildTripText(sched.tripFrom); 
+                }
                 
-                const absents = []; const selfT = [];
+                const absents = []; 
+                const selfT = [];
                 teamMembers.forEach(m => {
                     let status = 'all';
                     if (m.role === 'player') status = team.attendanceData?.[sched.id]?.[m.name]?.status || 'all';
                     else status = team.parentAttendanceData?.[sched.id]?.[m.name]?.status || 'absent';
                     let isAtt = m.role === 'player' ? ['all', 'am', 'pm'].includes(status) : ['all', 'triangle', 'am', 'pm'].includes(status);
                     
-                    if (!isAtt) { if (m.role === 'player' || m.role === 'staff') { absents.push(m.name); } }
-                    const inTo = (sched.tripTo?.selfTransport || []).includes(m.name); const inFrom = (sched.tripFrom?.selfTransport || []).includes(m.name);
-                    if ((inTo || inFrom) && isAtt) { if(!selfT.includes(m.name)) selfT.push(m.name); }
+                    if (!isAtt) { 
+                        if (m.role === 'player' || m.role === 'staff') { absents.push(m.name); } 
+                    }
+                    const inTo = (sched.tripTo?.selfTransport || []).includes(m.name); 
+                    const inFrom = (sched.tripFrom?.selfTransport || []).includes(m.name);
+                    if ((inTo || inFrom) && isAtt) { 
+                        if(!selfT.includes(m.name)) selfT.push(m.name); 
+                    }
                 });
-                kyubuMembers.forEach(m => { if (m.role === 'player' && !absents.includes(m.name)) absents.push(m.name); });
+                kyubuMembers.forEach(m => { 
+                    if (m.role === 'player' && !absents.includes(m.name)) absents.push(m.name); 
+                });
                 
                 if (selfT.length > 0) { text += `≪試合直行直帰≫${selfT.map(getFormattedNameForLine).join('・')}\n`; }
                 if (absents.length > 0) { text += `≪お休み≫${absents.map(mName => { const isKyubu = kyubuMembers.some(k => k.name === mName); return isKyubu ? getLastName(mName) : getFormattedNameForLine(mName); }).join('・')}\n`; }
+                
                 text += `\n訂正、変更がある方は世話役までお願いします。\n`;
             });
+
+            if (url) {
+                text += `\n回答URL: ${url}\n`;
+            }
+
             return text.trim();
         };
-
         window.generateLineTextForEdit = function() {
             const text = window.buildLineText(); if (!text) return;
             document.getElementById('line-copy-config-area').classList.add('hidden'); document.getElementById('line-copy-config-area').classList.remove('flex');
             const editArea = document.getElementById('line-copy-edit-area'); editArea.classList.remove('hidden'); editArea.classList.add('flex');
-            document.getElementById('line-copy-textarea').value = text.trim();
+            document.getElementById('line-copy-textarea').value = text.trim(); document.getElementById('btn-generate-line').classList.add('hidden'); document.getElementById('btn-generate-line').classList.remove('flex'); document.getElementById('btn-copy-line').classList.remove('hidden'); document.getElementById('btn-copy-line').classList.add('flex');
         };
 
         window.autoAssignSeats = function() {
@@ -2252,5 +2360,6 @@
             if (typeof window.renderApp === 'function') window.renderApp();
         }
     </script>
+
 </body>
 </html>

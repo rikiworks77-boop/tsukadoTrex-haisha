@@ -1623,23 +1623,66 @@
         window.copyMonthlyDutyText = function() { const ta = document.getElementById('monthly-duty-textarea'); ta.select(); document.execCommand('copy'); alert('月毎当番テキストをクリップボードにコピーしました！'); };
 
         window.autoAssignMonthlyDuty = function() {
-            if(!confirm('【月間当番の自動作成】\n現在の月に出席予定の保護者を、各日2名ずつ自動で割り当てます。\n※「調整中」「午前」「午後」は0.5回分として計算し、全員が確実に1回分（1.0以上）を満たするように優先して割り当てます。\n（既存の手動割り当てはリセットされます）実行しますか？')) return;
+            if(!confirm('【月間当番の自動作成（出席少ない人優先＆上限2回）】\n月の全日程をランダムな順で割り当てます。\n※「月の出席日数が少ない人」から優先的に当番に割り当て、不公平感を解消します。（最大2.0回まで）\n（既存の手動割り当てはリセットされます）実行しますか？')) return;
             const team = window.appData.teams[window.appData.currentTeam]; const monthSchedules = getFilteredSchedulesForCurrentMonth();
             if(monthSchedules.length === 0) { alert('この月の活動日がありません。'); return; }
             const teamMembers = (window.appData.members || []).filter(m => m.teams && m.teams.includes(window.appData.currentTeam) && !m.isKyubu);
             let dutyMembers = teamMembers.filter(m => { if(m.role !== 'parent') return false; const allowed = m.allowedDuties || ['当番', 'スコアラー', '球数カウント', '塁審', '自転車引率']; if(allowed.length === 1 && allowed[0] === 'NONE') return false; return allowed.includes('当番'); });
             if(dutyMembers.length === 0) { alert('当番可能な保護者が1人もいません。'); return; }
+            
             monthSchedules.forEach(s => { if(!s.dutyAssignments) s.dutyAssignments = {}; s.dutyAssignments['当番'] = []; });
-            let assignScores = {}; dutyMembers.forEach(m => assignScores[m.name] = 0);
+            
+            let assignScores = {}; 
+            let attendanceCounts = {};
+            
             const getWeight = (schedId, memberName) => { const att = team.parentAttendanceData?.[schedId]?.[memberName]; const status = att ? att.status : 'absent'; if (['am', 'pm', 'triangle'].includes(status)) return 0.5; if (status === 'all') return 1.0; return 0; };
-            monthSchedules.sort((a,b) => a.date.localeCompare(b.date)).forEach(s => {
-                let availableForToday = dutyMembers.filter(m => { const status = team.parentAttendanceData?.[s.id]?.[m.name]?.status || 'absent'; if(!['all', 'am', 'pm', 'triangle'].includes(status)) return false; const dutyPref = team.dutyData?.[s.id]?.[m.name]?.roles?.['当番']; if(dutyPref === '×') return false; return true; });
-                availableForToday.sort((a, b) => { const scoreA = assignScores[a.name]; const scoreB = assignScores[b.name]; if (scoreA !== scoreB) return scoreA - scoreB; return Math.random() - 0.5; });
+            
+            dutyMembers.forEach(m => { 
+                assignScores[m.name] = 0; 
+                attendanceCounts[m.name] = 0;
+                monthSchedules.forEach(s => {
+                    attendanceCounts[m.name] += getWeight(s.id, m.name);
+                });
+            });
+            
+            let shuffledSchedules = [...monthSchedules];
+            for (let i = shuffledSchedules.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffledSchedules[i], shuffledSchedules[j]] = [shuffledSchedules[j], shuffledSchedules[i]];
+            }
+
+            shuffledSchedules.forEach(s => {
+                let availableForToday = dutyMembers.filter(m => { 
+                    const status = team.parentAttendanceData?.[s.id]?.[m.name]?.status || 'absent'; 
+                    if(!['all', 'am', 'pm', 'triangle'].includes(status)) return false; 
+                    const dutyPref = team.dutyData?.[s.id]?.[m.name]?.roles?.['当番']; 
+                    if(dutyPref === '×') return false; 
+                    const weight = getWeight(s.id, m.name);
+                    if (assignScores[m.name] + weight > 2.0) return false;
+                    return true; 
+                });
+                
+                availableForToday.sort((a, b) => { 
+                    const scoreA = assignScores[a.name]; 
+                    const scoreB = assignScores[b.name]; 
+                    if (scoreA !== scoreB) return scoreA - scoreB; 
+                    
+                    const attA = attendanceCounts[a.name];
+                    const attB = attendanceCounts[b.name];
+                    if (attA !== attB) return attA - attB;
+                    
+                    return Math.random() - 0.5; 
+                });
+                
                 let assignedToday = [];
-                for(let i = 0; i < 2 && i < availableForToday.length; i++) { const selected = availableForToday[i]; assignedToday.push(selected.name); assignScores[selected.name] += getWeight(s.id, selected.name); }
+                for(let i = 0; i < 2 && i < availableForToday.length; i++) { 
+                    const selected = availableForToday[i]; 
+                    assignedToday.push(selected.name); 
+                    assignScores[selected.name] += getWeight(s.id, selected.name); 
+                }
                 s.dutyAssignments['当番'] = assignedToday;
             });
-            window.triggerUpdate(); alert('月間の当番自動割り当てが完了しました。');
+            window.triggerUpdate(); alert('月間の当番自動割り当て（出席少ない人優先＆上限ストッパー）が完了しました。');
         };
 
         window.updateMonthlyDutySummary = function() {
@@ -1650,11 +1693,16 @@
             let assignScores = {}; dutyMembers.forEach(m => assignScores[m.name] = 0);
             const getWeight = (schedId, memberName) => { const att = team.parentAttendanceData?.[schedId]?.[memberName]; const status = att ? att.status : 'absent'; if (['am', 'pm', 'triangle'].includes(status)) return 0.5; if (status === 'all') return 1.0; return 0; };
             monthSchedules.forEach(s => { const assigned = s.dutyAssignments?.['当番'] || []; assigned.forEach(name => { if(assignScores[name] !== undefined) { assignScores[name] += getWeight(s.id, name); } }); });
-            let doneMembers = []; let notDoneMembers = [];
-            dutyMembers.forEach(m => { const score = assignScores[m.name]; if(score >= 1.0) { doneMembers.push(`${m.name} <span class="text-[10px] text-emerald-600 font-bold ml-1">(${score}回)</span>`); } else { notDoneMembers.push(`${m.name} <span class="text-[10px] text-rose-500 font-bold ml-1">(${score}回)</span>`); } });
+            let doneMembers = []; let notDoneMembers = []; let maxMembers = [];
+            dutyMembers.forEach(m => { 
+                const score = assignScores[m.name]; 
+                if(score >= 2.0) { maxMembers.push(`${m.name} <span class="text-[10px] text-blue-600 font-bold ml-1">(${score}回)</span>`); }
+                else if(score >= 1.0) { doneMembers.push(`${m.name} <span class="text-[10px] text-emerald-600 font-bold ml-1">(${score}回)</span>`); } 
+                else { notDoneMembers.push(`${m.name} <span class="text-[10px] text-rose-500 font-bold ml-1">(${score}回)</span>`); } 
+            });
             summaryContainer.innerHTML = `
-                <div class="bg-rose-50 border border-rose-200 rounded-xl p-3 shadow-sm flex flex-col"><div class="text-xs font-black text-rose-700 border-b border-rose-200 pb-1 mb-2">未割当・不足（1.0回未満） <span class="bg-rose-200 text-rose-800 px-1.5 rounded-full">${notDoneMembers.length}名</span></div><div class="flex flex-wrap gap-1.5 text-xs font-bold text-slate-700">${notDoneMembers.length > 0 ? notDoneMembers.map(n => `<span class="bg-white border border-rose-200 px-2 py-1 rounded-lg">${n}</span>`).join('') : '<span class="text-slate-400 py-1">全員が1回分（1.0以上）を満たしています🎉</span>'}</div></div>
-                <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 shadow-sm flex flex-col"><div class="text-xs font-black text-emerald-700 border-b border-emerald-200 pb-1 mb-2">割当済（1.0回以上） <span class="bg-emerald-200 text-emerald-800 px-1.5 rounded-full">${doneMembers.length}名</span></div><div class="flex flex-wrap gap-1.5 text-xs font-bold text-slate-700">${doneMembers.length > 0 ? doneMembers.map(n => `<span class="bg-white border border-emerald-200 px-2 py-1 rounded-lg">${n}</span>`).join('') : '<span class="text-slate-400 py-1">まだ誰も1回分を満たしていません</span>'}</div></div>
+                <div class="bg-rose-50 border border-rose-200 rounded-xl p-3 shadow-sm flex flex-col"><div class="text-xs font-black text-rose-700 border-b border-rose-200 pb-1 mb-2">未割当・不足（1.0回未満） <span class="bg-rose-200 text-rose-800 px-1.5 rounded-full">${notDoneMembers.length}名</span></div><div class="flex flex-wrap gap-1.5 text-xs font-bold text-slate-700">${notDoneMembers.length > 0 ? notDoneMembers.map(n => `<span class="bg-white border border-rose-200 px-2 py-1 rounded-lg">${n}</span>`).join('') : '<span class="text-slate-400 py-1">全員が1回分を満たしています🎉</span>'}</div></div>
+                <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 shadow-sm flex flex-col"><div class="text-xs font-black text-emerald-700 border-b border-emerald-200 pb-1 mb-2">割当済（1.0〜2.0回） <span class="bg-emerald-200 text-emerald-800 px-1.5 rounded-full">${doneMembers.length + maxMembers.length}名</span></div><div class="flex flex-wrap gap-1.5 text-xs font-bold text-slate-700">${doneMembers.length > 0 ? doneMembers.map(n => `<span class="bg-white border border-emerald-200 px-2 py-1 rounded-lg">${n}</span>`).join('') : ''} ${maxMembers.length > 0 ? maxMembers.map(n => `<span class="bg-blue-50 border border-blue-300 px-2 py-1 rounded-lg">${n}</span>`).join('') : ''}</div></div>
             `;
         };
 

@@ -186,7 +186,7 @@
                         <div>
                             <label class="block text-xs font-bold text-slate-600 mb-1">乗車定員</label>
                             <select id="master-car-capacity" onchange="window.renderCarSeatsUI(this.value, 'new-car-fixed-seats', 'new')" class="w-full bg-white border rounded-lg px-3 py-2 text-xs outline-none font-bold">
-                                <option value="5">5人乗り</option><option value="7" selected>7人乗り</option><option value="8">8人乗り</option>
+                                <option value="4">4人乗り</option><option value="5">5人乗り</option><option value="7" selected>7人乗り</option><option value="8">8人乗り</option>
                             </select>
                         </div>
                         <div>
@@ -375,7 +375,7 @@
                 <input type="hidden" id="edit-car-id">
                 <div><label class="block text-xs font-bold text-slate-600 mb-1">車両名（オーナー名）</label><input type="text" id="edit-car-owner" required class="w-full bg-slate-50 border rounded-lg px-3 py-2 text-sm outline-none font-bold"></div>
                 <div><label class="block text-xs font-bold text-slate-600 mb-1">ドライバー</label><select id="edit-car-driver" required class="w-full bg-slate-50 border rounded-lg px-3 py-2 text-sm font-bold outline-none text-slate-700"></select></div>
-                <div class="grid grid-cols-2 gap-2"><div><label class="block text-xs font-bold text-slate-600 mb-1">乗車定員</label><select id="edit-car-capacity" onchange="window.renderCarSeatsUI(this.value, 'edit-car-fixed-seats', 'edit')" class="w-full bg-slate-50 border rounded-lg px-2 py-2 text-xs font-bold outline-none"><option value="5">5人乗り</option><option value="7">7人乗り</option><option value="8">8人乗り</option></select></div><div><label class="block text-xs font-bold text-slate-600 mb-1">道具車枠(通常3)</label><input type="number" id="edit-car-gearseats" min="0" max="8" class="w-full bg-slate-50 border rounded-lg px-2 py-2 text-sm font-bold outline-none"></div></div>
+                <div class="grid grid-cols-2 gap-2"><div><label class="block text-xs font-bold text-slate-600 mb-1">乗車定員</label><select id="edit-car-capacity" onchange="window.renderCarSeatsUI(this.value, 'edit-car-fixed-seats', 'edit')" class="w-full bg-slate-50 border rounded-lg px-2 py-2 text-xs font-bold outline-none"><option value="4">4人乗り</option><option value="5">5人乗り</option><option value="7">7人乗り</option><option value="8">8人乗り</option></select></div><div><label class="block text-xs font-bold text-slate-600 mb-1">道具車枠(通常3)</label><input type="number" id="edit-car-gearseats" min="0" max="8" class="w-full bg-slate-50 border rounded-lg px-2 py-2 text-sm font-bold outline-none"></div></div>
                 <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 mt-2"><label class="block text-xs font-bold text-slate-600 mb-2">🚗 固定同乗者の事前登録</label><div id="edit-car-fixed-seats" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div></div>
                 <div><label class="block text-xs font-bold text-slate-600 mb-1">利用チーム</label><div class="flex gap-4 bg-slate-50 p-2.5 rounded-lg border"><label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-car-teams" value="A" class="rounded w-4 h-4 text-blue-600"> A</label><label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-car-teams" value="B" class="rounded w-4 h-4 text-blue-600"> B</label><label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-car-teams" value="C" class="rounded w-4 h-4 text-blue-600"> C</label><label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer"><input type="checkbox" name="edit-car-teams" value="D" class="rounded w-4 h-4 text-blue-600"> D</label></div></div>
                 <div class="flex gap-2 pt-2">
@@ -1276,7 +1276,7 @@
                         targetSchedules.forEach(s => {
                             if(!team.carAttendanceData[s.id]) team.carAttendanceData[s.id] = {}; if(!team.carAttendanceData[s.id][car.id]) team.carAttendanceData[s.id][car.id] = { status: 'absent' };
                             const curStatus = team.carAttendanceData[s.id][car.id].status || 'absent';
-                            cHtml += `<td class="p-2 text-center border-l whitespace-nowrap"><select onchange="window.updateCarAttendanceCell('${car.id}', '${s.id}', 'status', this.value)" class="bg-slate-50 border rounded px-2 py-1.5 text-xs font-bold outline-none shadow-sm"><option value="absent" ${curStatus==='absent'?'selected':''}>× 不可</option><option value="all" ${curStatus==='all'?'selected':''}>〇 出動可</option><option value="double_circle" ${curStatus==='double_circle'?'selected':''}>◎ 道具車・出動可</option><option value="am" ${curStatus==='am'?'selected':''}>△ 午前</option><option value="pm" ${curStatus==='pm'?'selected':''}>▲ 午後</option><option value="triangle" ${curStatus==='triangle'?'selected':''}>調整中</option></select></td>`;
+                            cHtml += `<td class="p-2 text-center border-l whitespace-nowrap"><select onchange="window.updateCarAttendanceCell('${car.id}', '${s.id}', 'status', this.value)" class="bg-slate-50 border rounded px-2 py-1.5 text-xs font-bold outline-none shadow-sm"><option value="absent" ${curStatus==='absent'?'selected':''}>× 不可</option><option value="all" ${curStatus==='all'?'selected':''}>〇 出動可</option><option value="double_circle" ${curStatus==='double_circle'?'selected':''}>◎ 道具車・出動可</option><option value="self_only" ${curStatus==='self_only'?'selected':''}>🚗 自車移動</option><option value="am" ${curStatus==='am'?'selected':''}>△ 午前</option><option value="pm" ${curStatus==='pm'?'selected':''}>▲ 午後</option><option value="triangle" ${curStatus==='triangle'?'selected':''}>調整中</option></select></td>`;
                         });
                         cHtml += '</tr>';
                     });
@@ -1349,7 +1349,8 @@
         function syncActiveCarsToSchedule(sched, team) {
             const currentTeam = window.appData.currentTeam || 'A';
             const teamMasterCars = (window.appData.masterCars || []).filter(mc => mc.teams && mc.teams.includes(currentTeam));
-            const activeMasterCars = teamMasterCars.filter(mc => { const carAtt = team.carAttendanceData?.[sched.id]?.[mc.id]; return !(carAtt && carAtt.status === 'absent'); });
+            const activeMasterCars = teamMasterCars.filter(mc => { const carAtt = team.carAttendanceData?.[sched.id]?.[mc.id]; return !(carAtt && (carAtt.status === 'absent' || carAtt.status === 'self_only')); });
+            const selfOnlyCars = teamMasterCars.filter(mc => { const carAtt = team.carAttendanceData?.[sched.id]?.[mc.id]; return carAtt && carAtt.status === 'self_only'; });
             const teamMembers = (window.appData.members || []).filter(m => m.teams && m.teams.includes(currentTeam) && !m.isKyubu);
 
             ['to', 'from'].forEach(tName => {
@@ -1359,6 +1360,16 @@
                 if(!sched[tripKey].bikeSettings) sched[tripKey].bikeSettings = { leaders: {}, escorts: {}, useConvoy: false, convoyOrder: {} };
                 if(!sched[tripKey].bikeSettings.leaders) sched[tripKey].bikeSettings.leaders = {}; if(!sched[tripKey].bikeSettings.escorts) sched[tripKey].bikeSettings.escorts = {};
                 if(sched[tripKey].bikeSettings.useConvoy === undefined) sched[tripKey].bikeSettings.useConvoy = false;
+
+                // 自車移動(self_only)の車の固定乗員・ドライバーをselfTransportに追加
+                selfOnlyCars.forEach(mc => {
+                    const toAdd = [mc.driver, ...(mc.fixedPassengers || [])].filter(Boolean);
+                    toAdd.forEach(pName => {
+                        if (!sched[tripKey].selfTransport.includes(pName)) {
+                            sched[tripKey].selfTransport.push(pName);
+                        }
+                    });
+                });
 
                 let newCars = [];
                 activeMasterCars.forEach(mc => {

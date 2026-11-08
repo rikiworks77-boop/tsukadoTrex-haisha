@@ -290,13 +290,18 @@
                 </div>
                 
                 <div class="flex flex-col lg:flex-row items-center justify-between pt-3 mt-3 border-t border-slate-100 gap-3">
-                    <div class="inline-flex w-full lg:w-auto bg-slate-100 p-1 rounded-xl shadow-inner">
+                    <div class="flex items-center gap-2">
+                        <label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer bg-slate-50 text-slate-700 hover:bg-blue-50 hover:text-blue-900 border border-slate-300 px-3 py-2 rounded-lg shadow-sm transition">
+                            <input type="checkbox" id="return-diff-cb" onchange="window.toggleReturnDifferent(this.checked)" class="rounded w-4 h-4 text-blue-600 cursor-pointer"> 往路と復路で配車を分ける
+                        </label>
+                    </div>
+                    <div id="trip-toggle-container" class="inline-flex w-full lg:w-auto bg-slate-100 p-1 rounded-xl shadow-inner hidden">
                         <button type="button" onclick="window.switchTripType('to')" id="trip-to-btn" class="flex-1 px-6 py-2 rounded-lg text-xs font-extrabold transition bg-blue-600 text-white shadow">往路</button>
                         <button type="button" onclick="window.switchTripType('from')" id="trip-from-btn" class="flex-1 px-6 py-2 rounded-lg text-xs font-extrabold transition text-slate-600">復路</button>
                     </div>
                     
                     <div class="flex flex-col sm:flex-row gap-2 w-full lg:w-auto justify-end">
-                        <div class="grid grid-cols-2 gap-2 w-full sm:w-auto">
+                        <div id="trip-copy-container" class="grid grid-cols-2 gap-2 w-full sm:w-auto hidden">
                             <button type="button" onclick="window.copyToTripFrom()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-2 py-2 rounded-xl text-[11px] sm:text-xs transition shadow flex justify-center items-center">📋 往路→復路</button>
                             <button type="button" onclick="window.copyToTripTo()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold px-2 py-2 rounded-xl text-[11px] sm:text-xs transition shadow flex justify-center items-center">📋 復路→往路</button>
                         </div>
@@ -593,6 +598,7 @@
                     if(!sched.transportMode) sched.transportMode = 'car';
                     if(!sched.dutyRoles) sched.dutyRoles = ['当番'];
                     if(!sched.dutyAssignments) sched.dutyAssignments = {};
+                    if(sched.isReturnDifferent === undefined) sched.isReturnDifferent = false;
                     ['tripTo', 'tripFrom'].forEach(tKeyName => {
                         if(!sched[tKeyName]) sched[tKeyName] = { cars: [], selfTransport: [], optOut: [], bikeSettings: { leaders: {}, escorts: {}, useConvoy: false, convoyOrder: {} } };
                         if(!sched[tKeyName].selfTransport) sched[tKeyName].selfTransport = [];
@@ -736,7 +742,7 @@
                     if(!team.schedules.some(s => s.date === dStr)) {
                         team.schedules.push({
                             id: 'sched_' + Date.now() + '_' + Math.floor(Math.random()*10000), 
-                            date: dStr, destination: '活動日', transportMode: 'car', dutyRoles: ['当番'], dutyAssignments: {}, 
+                            date: dStr, destination: '活動日', transportMode: 'car', dutyRoles: ['当番'], dutyAssignments: {}, isReturnDifferent: false, 
                             tripTo: { cars: [], selfTransport: [], optOut: [], bikeSettings: { leaders: {}, escorts: {}, useConvoy: false, convoyOrder: {} } }, 
                             tripFrom: { cars: [], selfTransport: [], optOut: [], bikeSettings: { leaders: {}, escorts: {}, useConvoy: false, convoyOrder: {} } }
                         });
@@ -1071,6 +1077,9 @@
             } else if (type === 'parent_att') { 
                 if(!team.parentAttendanceData) team.parentAttendanceData = {}; if(!team.parentAttendanceData[schedId]) team.parentAttendanceData[schedId] = {}; if(!team.parentAttendanceData[schedId][memberName]) team.parentAttendanceData[schedId][memberName] = { status: 'absent', note: '' }; 
                 team.parentAttendanceData[schedId][memberName].note = val; 
+            } else if (type === 'car') { 
+                if(!team.carAttendanceData) team.carAttendanceData = {}; if(!team.carAttendanceData[schedId]) team.carAttendanceData[schedId] = {}; if(!team.carAttendanceData[schedId][memberName]) team.carAttendanceData[schedId][memberName] = { status: 'absent', note: '' }; 
+                team.carAttendanceData[schedId][memberName].note = val; 
             } else { 
                 if(!team.attendanceData) team.attendanceData = {}; if(!team.attendanceData[schedId]) team.attendanceData[schedId] = {}; if(!team.attendanceData[schedId][memberName]) team.attendanceData[schedId][memberName] = { status: 'all', note: '' }; 
                 team.attendanceData[schedId][memberName].note = val; 
@@ -1270,15 +1279,17 @@
                 else {
                     let cHtml = '<table class="min-w-max w-full text-left border-collapse text-xs bg-white"><thead><tr class="bg-slate-100 border-b text-slate-700"><th class="p-2.5 font-black sticky left-0 top-0 z-30 bg-slate-100 shadow-sm whitespace-nowrap">車両</th>';
                     targetSchedules.forEach(s => { cHtml += `<th class="p-2.5 text-center whitespace-nowrap sticky top-0 z-20 bg-slate-100 border-l">${formatDateWithDay(s.date)}</th>`; });
-                    cHtml += '</tr></thead><tbody class="divide-y">';
+                    cHtml += '<th class="p-2.5 text-center sticky top-0 z-20 bg-slate-200 border-l font-bold whitespace-nowrap">備考</th></tr></thead><tbody class="divide-y">';
                     teamMasterCars.forEach(car => {
                         cHtml += `<tr><td class="p-2.5 font-extrabold sticky left-0 z-10 bg-white shadow-sm whitespace-nowrap">${car.owner}号</td>`;
                         targetSchedules.forEach(s => {
                             if(!team.carAttendanceData[s.id]) team.carAttendanceData[s.id] = {}; if(!team.carAttendanceData[s.id][car.id]) team.carAttendanceData[s.id][car.id] = { status: 'absent' };
                             const curStatus = team.carAttendanceData[s.id][car.id].status || 'absent';
-                            cHtml += `<td class="p-2 text-center border-l whitespace-nowrap"><select onchange="window.updateCarAttendanceCell('${car.id}', '${s.id}', 'status', this.value)" class="bg-slate-50 border rounded px-2 py-1.5 text-xs font-bold outline-none shadow-sm"><option value="absent" ${curStatus==='absent'?'selected':''}>× 不可</option><option value="all" ${curStatus==='all'?'selected':''}>〇 出動可</option><option value="double_circle" ${curStatus==='double_circle'?'selected':''}>◎ 道具車・出動可</option><option value="self_only" ${curStatus==='self_only'?'selected':''}>🚗 自車移動</option><option value="am" ${curStatus==='am'?'selected':''}>△ 午前</option><option value="pm" ${curStatus==='pm'?'selected':''}>▲ 午後</option><option value="triangle" ${curStatus==='triangle'?'selected':''}>調整中</option></select></td>`;
+                            cHtml += `<td class="p-2 text-center border-l whitespace-nowrap"><select onchange="window.updateCarAttendanceCell('${car.id}', '${s.id}', 'status', this.value)" class="bg-slate-50 border rounded px-2 py-1.5 text-xs font-bold outline-none shadow-sm"><option value="absent" ${curStatus==='absent'?'selected':''}>× 不可</option><option value="all" ${curStatus==='all'?'selected':''}>〇 出動可</option><option value="double_circle" ${curStatus==='double_circle'?'selected':''}>◎ 道具車・出動可</option><option value="am" ${curStatus==='am'?'selected':''}>△ 午前</option><option value="pm" ${curStatus==='pm'?'selected':''}>▲ 午後</option><option value="self_only" ${curStatus==='self_only'?'selected':''}>自車移動</option><option value="triangle" ${curStatus==='triangle'?'selected':''}>調整中</option></select></td>`;
                         });
-                        cHtml += '</tr>';
+                        const lastSchedId = targetSchedules.length > 0 ? targetSchedules[targetSchedules.length - 1].id : '';
+                        const noteVal = (lastSchedId && team.carAttendanceData[lastSchedId] && team.carAttendanceData[lastSchedId][car.id]) ? (team.carAttendanceData[lastSchedId][car.id].note || '') : '';
+                        cHtml += `<td class="p-2.5 bg-slate-50/50 text-center border-l whitespace-nowrap"><input type="text" value="${noteVal}" onchange="window.updateNoteCell('${car.id}', '${lastSchedId}', 'car', this.value)" placeholder="自由意見..." class="w-32 bg-white border rounded px-2 py-1 text-xs outline-none"></td></tr>`;
                     });
                     cHtml += '</tbody></table>'; carTableEl.innerHTML = cHtml;
                 }
@@ -1298,7 +1309,7 @@
             const team = window.appData.teams[window.appData.currentTeam];
             const currentMonthSchedules = getFilteredSchedulesForCurrentMonth();
             if(!team.schedules || team.schedules.length === 0) {
-                team.schedules = [{ id: 'sched_' + Date.now(), date: new Date().toISOString().split('T')[0], destination: '活動日', transportMode: 'car', dutyRoles: ['当番'], dutyAssignments: {}, tripTo: { cars: [], selfTransport: [], optOut: [], bikeSettings: { leaders: {}, escorts: {}, useConvoy: false, convoyOrder: {} } }, tripFrom: { cars: [], selfTransport: [], optOut: [], bikeSettings: { leaders: {}, escorts: {}, useConvoy: false, convoyOrder: {} } } }];
+                team.schedules = [{ id: 'sched_' + Date.now(), date: new Date().toISOString().split('T')[0], destination: '活動日', transportMode: 'car', dutyRoles: ['当番'], dutyAssignments: {}, isReturnDifferent: false, tripTo: { cars: [], selfTransport: [], optOut: [], bikeSettings: { leaders: {}, escorts: {}, useConvoy: false, convoyOrder: {} } }, tripFrom: { cars: [], selfTransport: [], optOut: [], bikeSettings: { leaders: {}, escorts: {}, useConvoy: false, convoyOrder: {} } } }];
                 team.currentScheduleId = team.schedules[0].id; return team.schedules[0];
             }
             let sched = currentMonthSchedules.find(s => s.id === team.currentScheduleId);
@@ -1345,6 +1356,17 @@
         
         window.updateTransportMode = function(mode) { getCurrentSchedule().transportMode = mode; window.triggerUpdate(); };
         window.switchTripType = function(type) { window.appData.currentTrip = type; if (typeof window.renderApp === 'function') window.renderApp(); };
+
+        window.toggleReturnDifferent = function(isChecked) {
+            const sched = getCurrentSchedule();
+            sched.isReturnDifferent = isChecked;
+            if (!isChecked) {
+                window.appData.currentTrip = 'to';
+                sched.tripFrom = JSON.parse(JSON.stringify(sched.tripTo));
+            }
+            window.triggerUpdate();
+        };
+
 
         function syncActiveCarsToSchedule(sched, team) {
             const currentTeam = window.appData.currentTeam || 'A';
@@ -1396,7 +1418,8 @@
         window.toggleGearCar = function(carId, isGearCar) { const sched = getCurrentSchedule(); const tripData = window.appData.currentTrip === 'to' ? sched.tripTo : sched.tripFrom; const car = tripData.cars.find(c => c.id === carId); if(car) car.isGearCar = isGearCar; window.triggerUpdate(); };
         window.updateCarCapacityTemp = function(carId, val) { const sched = getCurrentSchedule(); const tripData = window.appData.currentTrip === 'to' ? sched.tripTo : sched.tripFrom; const car = tripData.cars.find(c => c.id === carId); if(car) car.capacity = parseInt(val) || 7; window.triggerUpdate(); };
         window.updateCarGearTemp = function(carId, val) { const sched = getCurrentSchedule(); const tripData = window.appData.currentTrip === 'to' ? sched.tripTo : sched.tripFrom; const car = tripData.cars.find(c => c.id === carId); if(car) car.capacity = parseInt(val) || 3; window.triggerUpdate(); };
-        window.toggleDutyAssignment = function(role, memberName, isAssigned) { const sched = getCurrentSchedule(); if(!sched.dutyAssignments) sched.dutyAssignments = {}; if(!sched.dutyAssignments[role]) sched.dutyAssignments[role] = []; let list = sched.dutyAssignments[role]; if(isAssigned && !list.includes(memberName)) list.push(memberName); else if(!isAssigned) list = list.filter(n => n !== memberName); sched.dutyAssignments[role] = list; window.triggerUpdate(); };
+        window.toggleDutyAssignment = function(role, memberName, isAssigned) { const sched = getCurrentSchedule(); if(!sched.dutyAssignments) sched.dutyAssignments = {};
+                    if(sched.isReturnDifferent === undefined) sched.isReturnDifferent = false; if(!sched.dutyAssignments[role]) sched.dutyAssignments[role] = []; let list = sched.dutyAssignments[role]; if(isAssigned && !list.includes(memberName)) list.push(memberName); else if(!isAssigned) list = list.filter(n => n !== memberName); sched.dutyAssignments[role] = list; window.triggerUpdate(); };
         window.updateBikeSetting = function(field, val) { const sched = getCurrentSchedule(); const tripData = window.appData.currentTrip === 'to' ? sched.tripTo : sched.tripFrom; tripData.bikeSettings[field] = val; window.triggerUpdate(); };
         
         window.toggleUseConvoy = function(isChecked) {
@@ -1474,7 +1497,7 @@
 
         window.openScheduleModal = function() { document.getElementById('schedule-modal').classList.remove('hidden'); document.getElementById('schedule-modal').classList.add('flex'); document.getElementById('new-sched-date').value = new Date().toISOString().split('T')[0]; };
         window.closeScheduleModal = function() { document.getElementById('schedule-modal').classList.add('hidden'); document.getElementById('schedule-modal').classList.remove('flex'); };
-        window.handleCreateSchedule = function(event) { event.preventDefault(); const date = document.getElementById('new-sched-date').value; const desc = document.getElementById('new-sched-desc').value.trim(); const team = window.appData.teams[window.appData.currentTeam]; const newId = 'sched_' + Date.now() + '_' + Math.floor(Math.random()*10000); team.schedules.push({ id: newId, date: date, destination: desc, transportMode: 'car', dutyRoles: ['当番'], dutyAssignments: {}, tripTo: { cars: [], selfTransport: [], optOut: [], bikeSettings: { leaders: {}, escorts: {}, useConvoy: false, convoyOrder: {} } }, tripFrom: { cars: [], selfTransport: [], optOut: [], bikeSettings: { leaders: {}, escorts: {}, useConvoy: false, convoyOrder: {} } } }); team.currentScheduleId = newId; window.appData.currentScheduleMonth = date.slice(0, 7); window.closeScheduleModal(); window.triggerUpdate(); };
+        window.handleCreateSchedule = function(event) { event.preventDefault(); const date = document.getElementById('new-sched-date').value; const desc = document.getElementById('new-sched-desc').value.trim(); const team = window.appData.teams[window.appData.currentTeam]; const newId = 'sched_' + Date.now() + '_' + Math.floor(Math.random()*10000); team.schedules.push({ id: newId, date: date, destination: desc, transportMode: 'car', dutyRoles: ['当番'], dutyAssignments: {}, isReturnDifferent: false, tripTo: { cars: [], selfTransport: [], optOut: [], bikeSettings: { leaders: {}, escorts: {}, useConvoy: false, convoyOrder: {} } }, tripFrom: { cars: [], selfTransport: [], optOut: [], bikeSettings: { leaders: {}, escorts: {}, useConvoy: false, convoyOrder: {} } } }); team.currentScheduleId = newId; window.appData.currentScheduleMonth = date.slice(0, 7); window.closeScheduleModal(); window.triggerUpdate(); };
         window.deleteCurrentSchedule = function() { const team = window.appData.teams[window.appData.currentTeam]; if(team.schedules.length <= 1) { alert('最後の活動日は削除できません'); return; } if(!confirm('この活動日を削除しますか？')) return; const sched = getCurrentSchedule(); team.schedules = team.schedules.filter(s => s.id !== sched.id); const remaining = getFilteredSchedulesForCurrentMonth(); team.currentScheduleId = remaining.length > 0 ? remaining[0].id : team.schedules[0].id; window.triggerUpdate(); };
 
         window.openSeatAssignModal = function(carId, seatIndex) {
@@ -1719,15 +1742,17 @@
 
         function isTripEqual(tripA, tripB, transportMode) {
             if (!tripA || !tripB) return false;
+            const selfA = [...(tripA.selfTransport || [])].sort().join(',');
+            const selfB = [...(tripB.selfTransport || [])].sort().join(',');
+            if (selfA !== selfB) return false;
             if (transportMode === 'bike') {
                 const setA = tripA.bikeSettings || {}; const setB = tripB.bikeSettings || {}; const grades = ['6', '5', '4', '3', '2', '1'];
                 for (let g of grades) {
                     if ((setA.leaders?.[g] || '') !== (setB.leaders?.[g] || '')) return false;
-                    if ((setA.escorts?.[g] || []).sort().join(',') !== (setB.escorts?.[g] || []).sort().join(',')) return false;
+                    if ([...(setA.escorts?.[g] || [])].sort().join(',') !== [...(setB.escorts?.[g] || [])].sort().join(',')) return false;
                     if (setA.useConvoy !== setB.useConvoy) return false;
                     if (setA.useConvoy && (setA.convoyOrder?.[g] || []).join(',') !== (setB.convoyOrder?.[g] || []).join(',')) return false;
                 }
-                return true;
             }
             const carsA = (tripA.cars || []).filter(c => c.isActive); const carsB = (tripB.cars || []).filter(c => c.isActive);
             if (carsA.length !== carsB.length) return false;
@@ -1804,7 +1829,7 @@
                 if (idx > 0) text += '\n━━━━━━━━━━━━━━━━━━━━\n\n';
                 
                 const isBike = sched.transportMode === 'bike';
-                const isTripEq = isTripEqual(sched.tripTo, sched.tripFrom, sched.transportMode);
+                const isTripEq = !sched.isReturnDifferent;
 
                 const dateObj = new Date(sched.date);
                 const dateStr = `${dateObj.getMonth() + 1}月${dateObj.getDate()}日（${days[dateObj.getDay()]}）`;
@@ -2138,7 +2163,23 @@
             if(carModeBtn) carModeBtn.className = !isBike ? "flex-1 px-4 py-2 sm:py-1.5 rounded-lg text-xs font-extrabold transition bg-blue-600 text-white shadow text-center" : "flex-1 px-4 py-2 sm:py-1.5 rounded-lg text-xs font-extrabold transition text-slate-600 text-center";
             if(bikeModeBtn) bikeModeBtn.className = isBike ? "flex-1 px-4 py-2 sm:py-1.5 rounded-lg text-xs font-extrabold transition bg-blue-600 text-white shadow text-center" : "flex-1 px-4 py-2 sm:py-1.5 rounded-lg text-xs font-extrabold transition text-slate-600 text-center";
 
+            
+            const returnDiffCb = document.getElementById('return-diff-cb');
+            if (returnDiffCb) returnDiffCb.checked = !!sched.isReturnDifferent;
+            const tripToggleContainer = document.getElementById('trip-toggle-container');
+            const tripCopyContainer = document.getElementById('trip-copy-container');
+            if (sched.isReturnDifferent) {
+                if (tripToggleContainer) tripToggleContainer.classList.remove('hidden');
+                if (tripCopyContainer) tripCopyContainer.classList.remove('hidden');
+                if (window.appData.currentTrip !== 'to' && window.appData.currentTrip !== 'from') window.appData.currentTrip = 'to';
+            } else {
+                if (tripToggleContainer) tripToggleContainer.classList.add('hidden');
+                if (tripCopyContainer) tripCopyContainer.classList.add('hidden');
+                window.appData.currentTrip = 'to';
+            }
+
             const toBtn = document.getElementById('trip-to-btn'); const fromBtn = document.getElementById('trip-from-btn'); const isTo = window.appData.currentTrip !== 'from';
+
             if(toBtn) toBtn.className = isTo ? "flex-1 px-6 py-3 sm:py-2 rounded-lg text-xs font-extrabold transition bg-blue-600 text-white shadow text-center" : "flex-1 px-6 py-3 sm:py-2 rounded-lg text-xs font-extrabold transition text-slate-600 text-center";
             if(fromBtn) fromBtn.className = !isTo ? "flex-1 px-6 py-3 sm:py-2 rounded-lg text-xs font-extrabold transition bg-blue-600 text-white shadow text-center" : "flex-1 px-6 py-3 sm:py-2 rounded-lg text-xs font-extrabold transition text-slate-600 text-center";
 
@@ -2181,7 +2222,7 @@
 
                         gradeBlocksHtml += `<div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3"><div class="text-xs font-black text-blue-900 border-b pb-1">◆ ${grade}年生 (${gradePlayers.length}名)</div><div class="grid grid-cols-1 sm:grid-cols-2 gap-3"><div><label class="block text-[11px] font-bold text-slate-600 mb-1">🚩 先導</label><select onchange="window.updateGradeLeader('${grade}', this.value)" class="w-full bg-white border rounded-lg px-2.5 py-1.5 text-xs font-bold outline-none">${leaderOpts}</select></div><div><label class="block text-[11px] font-bold text-slate-600 mb-1">🏁 引率（当番で引率☑のメンバーのみ）</label><div class="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto p-2 bg-white border rounded-lg">${escortsHtml}</div></div></div><div id="convoy-order-block-${grade}" class="${convoyListClass}"><div class="text-[11px] font-bold text-slate-600 mb-1">🚴 車列の並び順</div><div class="space-y-1">${listHtml}</div></div></div>`;
                     });
-                    tHtml += `<div class="bg-white p-4 sm:p-5 rounded-2xl shadow-md border border-slate-200 space-y-4 mb-5"><div class="border-b pb-3 flex justify-between items-center"><h3 class="text-base font-black text-blue-900">🚲 自転車移動の設定 (${isTo ? '往路' : '復路'})</h3><label class="flex items-center gap-2 bg-blue-50 border px-3 py-1.5 rounded-xl cursor-pointer font-bold text-xs text-blue-900"><input type="checkbox" onchange="window.toggleUseConvoy(this.checked)" ${useConvoyChecked} class="w-4 h-4 rounded text-blue-600">車列を設定する</label></div><div class="space-y-4">${gradeBlocksHtml}</div></div>`;
+                    tHtml += `<div class="bg-white p-4 sm:p-5 rounded-2xl shadow-md border border-slate-200 space-y-4 mb-5"><div class="border-b pb-3 flex justify-between items-center"><h3 class="text-base font-black text-blue-900">🚲 自転車移動の設定 (${!sched.isReturnDifferent ? '往復共通' : (isTo ? '往路' : '復路')})</h3><label class="flex items-center gap-2 bg-blue-50 border px-3 py-1.5 rounded-xl cursor-pointer font-bold text-xs text-blue-900"><input type="checkbox" onchange="window.toggleUseConvoy(this.checked)" ${useConvoyChecked} class="w-4 h-4 rounded text-blue-600">車列を設定する</label></div><div class="space-y-4">${gradeBlocksHtml}</div></div>`;
                 }
 
                 let carSelectHtml = '';
@@ -2189,7 +2230,7 @@
                     carSelectHtml += `<div class="flex flex-col gap-2 bg-white px-3 py-2 border rounded-lg shadow-sm ${c.isActive ? 'border-blue-300 bg-blue-50/35' : 'border-slate-200'}"><div class="flex items-center justify-between gap-3"><label class="flex items-center gap-2 font-bold text-sm cursor-pointer text-blue-900"><input type="checkbox" onchange="window.toggleCarActive('${c.id}', this.checked)" ${c.isActive ? 'checked' : ''} class="w-4 h-4 rounded text-blue-600"> ${c.owner}号</label><label class="flex items-center gap-1 cursor-pointer text-slate-600 hover:text-amber-700 text-xs font-bold whitespace-nowrap"><input type="checkbox" onchange="window.toggleGearCar('${c.id}', this.checked)" ${c.isGearCar ? 'checked' : ''} class="rounded text-amber-600"> 道具車</label></div><div class="flex items-center gap-3 bg-white/60 p-1.5 rounded border border-dashed border-slate-300"><div class="flex items-center gap-1 w-1/2 sm:w-auto justify-center"><span class="text-[10px] text-slate-500 font-bold whitespace-nowrap">定員</span><input type="number" min="1" max="10" value="${c.capacity}" onchange="window.updateCarCapacityTemp('${c.id}', this.value)" class="w-12 text-xs border rounded p-0.5 text-center font-bold"></div><div class="flex items-center gap-1 w-1/2 sm:w-auto justify-center"><span class="text-[10px] text-slate-500 font-bold whitespace-nowrap">道具枠</span><input type="number" min="0" max="10" value="${c.gearSeats}" onchange="window.updateCarGearTemp('${c.id}', this.value)" class="w-12 text-xs border rounded p-0.5 text-center font-bold"></div></div></div>`;
                 });
                 
-                tHtml += `<div class="bg-white p-4 sm:p-5 rounded-2xl shadow-md border border-slate-200 mb-5"><h3 class="text-base font-black text-blue-900 mb-1 border-b pb-2">🚗 ${isBike ? 'サポート車両 兼 道具車の設定' : '出動車両の選択 ＆ 道具車設定'}</h3><p class="text-[11px] text-slate-500 mb-3">チェックを入れた車両が配車リストに表示されます。</p><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">${carSelectHtml || '<div class="text-xs text-slate-400">出動可能な車両がありません</div>'}</div></div>
+                tHtml += `<div class="bg-white p-4 sm:p-5 rounded-2xl shadow-md border border-slate-200 mb-5"><h3 class="text-base font-black text-blue-900 mb-1 border-b pb-2">🚗 ${isBike ? 'サポート車両 兼 道具車の設定' : '出動車両の選択 ＆ 道具車設定'} ${!sched.isReturnDifferent ? '' : (isTo ? '(往路)' : '(復路)')}</h3><p class="text-[11px] text-slate-500 mb-3">チェックを入れた車両が配車リストに表示されます。</p><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">${carSelectHtml || '<div class="text-xs text-slate-400">出動可能な車両がありません</div>'}</div></div>
                     <div id="car-stats-bar" class="bg-gradient-to-r from-blue-900 to-indigo-900 text-white p-3 sm:p-4 rounded-2xl shadow-lg flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-5">
                         <div class="flex flex-wrap items-center justify-start sm:justify-around w-full lg:w-auto gap-4 sm:gap-6"><div class="flex flex-col"><span class="text-[10px] text-blue-300 block font-bold">乗車対象</span><span id="stat-total" class="text-xl font-black">0名</span></div><div class="hidden sm:block h-8 w-px bg-blue-700"></div><div class="flex flex-col"><span class="text-[10px] text-blue-300 block font-bold">割当完了</span><span id="stat-assigned" class="text-xl font-black text-emerald-400">0名</span></div><div class="hidden sm:block h-8 w-px bg-blue-700"></div><div onclick="window.openUnassignedModal()" class="cursor-pointer group hover:bg-white/10 px-2 py-1 rounded-xl transition flex flex-col"><span class="text-[10px] text-amber-300 block font-bold">未割り当て <span class="underline">🔍確認</span></span><span id="stat-unassigned" class="text-xl font-black text-amber-400">0名</span></div></div>
                         <div class="flex flex-wrap items-center gap-2 sm:gap-3 w-full lg:w-auto"><button type="button" onclick="window.clearAllAssignments()" class="flex-1 sm:flex-none bg-rose-500 hover:bg-rose-400 text-white font-extrabold px-3 py-2 rounded-xl text-xs transition shadow border border-rose-400 whitespace-nowrap text-center">🗑️ 配車一括解除</button><button type="button" onclick="window.autoAssignSeats()" class="flex-1 sm:flex-none bg-emerald-500 hover:bg-emerald-400 text-white font-extrabold px-3 py-2 rounded-xl text-xs transition shadow border border-emerald-400 whitespace-nowrap text-center">✨ 自動割り当て</button><div class="w-full sm:w-auto bg-blue-950/60 px-3 py-1.5 rounded-xl border border-blue-800 flex items-center justify-between gap-2"><span class="text-[10px] text-blue-300 font-bold whitespace-nowrap">総定員 (実効)</span><span id="stat-seats" class="text-lg font-bold">0席</span></div></div>

@@ -1643,8 +1643,8 @@
                 else {
                     let formattedAssigned = assignedList.map(item => {
                         const formatted = formatName(item.name); const dutyDetail = team.dutyData?.[s.id]?.[item.name]?.roles?.[item.role];
-                        let prefixSuffix = ''; if (dutyDetail === '午前') prefixSuffix = '△'; else if (dutyDetail === '午後') prefixSuffix = '▲';
-                        return prefixSuffix ? `${prefixSuffix}${formatted}` : formatted;
+                        let suffix = ''; if (dutyDetail === '午前') suffix = '(午前)'; else if (dutyDetail === '午後') suffix = '(午後)';
+                        return suffix ? `${formatted}${suffix}` : formatted;
                     });
                     text += `${dateHeader}${formattedAssigned.join('・')}\n`;
                 }
@@ -1709,10 +1709,42 @@
                 });
                 
                 let assignedToday = [];
-                for(let i = 0; i < 2 && i < availableForToday.length; i++) { 
-                    const selected = availableForToday[i]; 
-                    assignedToday.push(selected.name); 
-                    assignScores[selected.name] += getWeight(s.id, selected.name); 
+                let coveredAM = false;
+                let coveredPM = false;
+
+                for (let i = 0; i < availableForToday.length && assignedToday.length < 2; i++) {
+                    const candidate = availableForToday[i];
+                    const dutyPref = team.dutyData?.[s.id]?.[candidate.name]?.roles?.['当番'];
+                    const status = team.parentAttendanceData?.[s.id]?.[candidate.name]?.status;
+                    const isAMOnly = dutyPref === '午前' || status === 'am';
+                    const isPMOnly = dutyPref === '午後' || status === 'pm';
+                    const isAll = !isAMOnly && !isPMOnly;
+
+                    if (assignedToday.length === 1) {
+                        if (isAMOnly && !coveredPM) {
+                            const hasPMProviderLater = availableForToday.slice(i + 1).some(m => {
+                                const dp = team.dutyData?.[s.id]?.[m.name]?.roles?.['当番'];
+                                const st = team.parentAttendanceData?.[s.id]?.[m.name]?.status;
+                                return dp === '午後' || st === 'pm' || (!['午前', 'am'].includes(dp) && !['午前', 'am'].includes(st));
+                            });
+                            if (hasPMProviderLater) continue; 
+                        }
+                        if (isPMOnly && !coveredAM) {
+                            const hasAMProviderLater = availableForToday.slice(i + 1).some(m => {
+                                const dp = team.dutyData?.[s.id]?.[m.name]?.roles?.['当番'];
+                                const st = team.parentAttendanceData?.[s.id]?.[m.name]?.status;
+                                return dp === '午前' || st === 'am' || (!['午後', 'pm'].includes(dp) && !['午後', 'pm'].includes(st));
+                            });
+                            if (hasAMProviderLater) continue;
+                        }
+                    }
+
+                    assignedToday.push(candidate.name);
+                    assignScores[candidate.name] += getWeight(s.id, candidate.name);
+                    
+                    if (isAll) { coveredAM = true; coveredPM = true; }
+                    else if (isAMOnly) { coveredAM = true; }
+                    else if (isPMOnly) { coveredPM = true; }
                 }
                 s.dutyAssignments['当番'] = assignedToday;
             });
@@ -1840,10 +1872,10 @@
                     const asStr = assigned.length > 0 ? assigned.map(mName => {
                         const formatted = getFormattedNameForLine(mName); 
                         const dutyDetail = team.dutyData?.[sched.id]?.[mName]?.roles?.[role];
-                        let prefixSuffix = ''; 
-                        if (dutyDetail === '午前') prefixSuffix = '△'; 
-                        else if (dutyDetail === '午後') prefixSuffix = '▲';
-                        return prefixSuffix ? `${prefixSuffix}${formatted}` : formatted;
+                        let suffix = ''; 
+                        if (dutyDetail === '午前') suffix = '(午前)'; 
+                        else if (dutyDetail === '午後') suffix = '(午後)';
+                        return suffix ? `${formatted}${suffix}` : formatted;
                     }).join('・') : '未定';
                     text += `${role}/${asStr}\n`;
                 });

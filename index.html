@@ -546,10 +546,10 @@
             showPastDates: false,
             members: [], masterCars: [],
             teams: {
-                A: { currentScheduleId: '', schedules: [], attendanceData: {}, parentAttendanceData: {}, carAttendanceData: {}, dutyData: {}, monthlySettings: {} },
-                B: { currentScheduleId: '', schedules: [], attendanceData: {}, parentAttendanceData: {}, carAttendanceData: {}, dutyData: {}, monthlySettings: {} },
-                C: { currentScheduleId: '', schedules: [], attendanceData: {}, parentAttendanceData: {}, carAttendanceData: {}, dutyData: {}, monthlySettings: {} },
-                D: { currentScheduleId: '', schedules: [], attendanceData: {}, parentAttendanceData: {}, carAttendanceData: {}, dutyData: {}, monthlySettings: {} }
+                A: { currentScheduleId: '', schedules: [], attendanceData: {}, parentAttendanceData: {}, carAttendanceData: {}, dutyData: {}, monthlySettings: {}, showPastDates: false },
+                B: { currentScheduleId: '', schedules: [], attendanceData: {}, parentAttendanceData: {}, carAttendanceData: {}, dutyData: {}, monthlySettings: {}, showPastDates: false },
+                C: { currentScheduleId: '', schedules: [], attendanceData: {}, parentAttendanceData: {}, carAttendanceData: {}, dutyData: {}, monthlySettings: {}, showPastDates: false },
+                D: { currentScheduleId: '', schedules: [], attendanceData: {}, parentAttendanceData: {}, carAttendanceData: {}, dutyData: {}, monthlySettings: {}, showPastDates: false }
             }
         };
 
@@ -565,7 +565,7 @@
             if(!window.appData.members) window.appData.members = [];
             if(!window.appData.masterCars) window.appData.masterCars = [];
             if(!window.appData.attendanceSubTab) window.appData.attendanceSubTab = 'player';
-            if(window.appData.showPastDates === undefined) window.appData.showPastDates = false;
+            // showPastDates はチームごとに管理
             if(window.appData.logoUrl === undefined) window.appData.logoUrl = '';
             if(window.appData.lastLineCopyUrl === undefined) window.appData.lastLineCopyUrl = '';
             if(!window.appData.teams) window.appData.teams = JSON.parse(JSON.stringify(defaultData.teams));
@@ -594,7 +594,7 @@
                         }
                     });
                 }
-                if(!team.schedules) team.schedules = []; if(!team.attendanceData) team.attendanceData = {}; if(!team.parentAttendanceData) team.parentAttendanceData = {}; if(!team.carAttendanceData) team.carAttendanceData = {}; if(!team.dutyData) team.dutyData = {}; if(!team.monthlySettings) team.monthlySettings = {};
+                if(!team.schedules) team.schedules = []; if(!team.attendanceData) team.attendanceData = {}; if(!team.parentAttendanceData) team.parentAttendanceData = {}; if(!team.carAttendanceData) team.carAttendanceData = {}; if(!team.dutyData) team.dutyData = {}; if(!team.monthlySettings) team.monthlySettings = {}; if(team.showPastDates === undefined) team.showPastDates = false;
 
                 team.schedules.forEach(sched => {
                     if(!sched.transportMode) sched.transportMode = 'car';
@@ -1021,8 +1021,12 @@
         window.switchAttendanceSubTab = function(subTab) { window.appData.attendanceSubTab = subTab; if (typeof window.renderApp === 'function') window.renderApp(); };
         
         window.togglePastDates = function(isChecked) {
-            window.appData.showPastDates = isChecked;
-            if (typeof window.renderApp === 'function') window.renderApp();
+            const teamKey = window.appData.currentTeam || 'A';
+            const team = window.appData.teams[teamKey];
+            if (team) {
+                team.showPastDates = isChecked;
+                window.triggerUpdate();
+            }
         };
 
         window.updateMonthlySetting = function(field, val) {
@@ -1108,7 +1112,7 @@
             
             const todayStr = new Date().toISOString().split('T')[0];
             const currentMonth = window.appData.currentPublicMonth; 
-            const showPast = !!window.appData.showPastDates;
+            const showPast = !!team.showPastDates;
             const targetSchedules = (monthlyGroups[currentMonth] || []).filter(s => showPast || s.date >= todayStr);
             
             const teamMembers = (window.appData.members || []).filter(m => m.teams && m.teams.includes(currentTeam) && !m.isKyubu);
@@ -1200,7 +1204,7 @@
             const currentMonth = window.appData.currentPublicMonth; 
 
             const todayStr = new Date().toISOString().split('T')[0];
-            const showPast = !!window.appData.showPastDates;
+            const showPast = !!team.showPastDates;
             const targetSchedules = (monthlyGroups[currentMonth] || []).filter(s => showPast || s.date >= todayStr);
 
             monthTabsEl.innerHTML = '';
@@ -1213,7 +1217,7 @@
 
             const toggleWrapper = document.createElement('label');
             toggleWrapper.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200 cursor-pointer hover:bg-slate-200 transition ml-auto whitespace-nowrap";
-            toggleWrapper.innerHTML = `<input type="checkbox" onchange="window.togglePastDates(this.checked)" ${showPast ? 'checked' : ''} class="w-4 h-4 rounded text-emerald-600"> 過去日も表示`;
+            toggleWrapper.innerHTML = `<input type="checkbox" onchange="window.togglePastDates(this.checked)" ${team.showPastDates ? 'checked' : ''} class="w-4 h-4 rounded text-emerald-600"> 過去日も表示`;
             monthTabsEl.appendChild(toggleWrapper);
 
             const teamMembers = (window.appData.members || []).filter(m => m.teams && m.teams.includes(currentTeam) && !m.isKyubu);

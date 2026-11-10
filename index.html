@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .drag-over { background-color: #eff6ff !important; border-color: #3b82f6 !important; transform: scale(1.02); }
+        .duty-assigned-highlight { background-color: #fef08a !important; border-color: #eab308 !important; } /* 追加: 黄色ハイライト */
         * { -webkit-tap-highlight-color: transparent; }
     </style>
 </head>
@@ -519,9 +520,10 @@
                 if (grpA === 1 || grpA === 2) {
                     return (b.grade || '').localeCompare(a.grade || '');
                 } else if (grpA === 3) {
-                    if (a.staffRole === '監督' && b.staffRole !== '監督') return -1;
-                    if (b.staffRole === '監督' && a.staffRole !== '監督') return 1;
-                    return 0;
+                    const staffOrder = {'代表':1, '副代表':2, '監督':3, 'コーチ':4};
+                    const oA = staffOrder[a.staffRole] || 5;
+                    const oB = staffOrder[b.staffRole] || 5;
+                    return oA - oB;
                 }
                 return 0;
             });
@@ -848,7 +850,7 @@
                 if(dutiesContainer) dutiesContainer.classList.remove('hidden');
             } else if(role === 'staff') { 
                 subLabel.textContent = 'スタッフ種別'; 
-                subWrapper.innerHTML = `<select id="${prefix}-sub" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-bold text-slate-700 outline-none"><option value="監督">監督</option><option value="コーチ" selected>コーチ</option></select>`; 
+                subWrapper.innerHTML = `<select id="${prefix}-sub" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-bold text-slate-700 outline-none"><option value="代表">代表</option><option value="副代表">副代表</option><option value="監督">監督</option><option value="コーチ" selected>コーチ</option></select>`; 
                 if(dutiesContainer) dutiesContainer.classList.remove('hidden');
             } else { 
                 subLabel.textContent = '-'; 
@@ -963,7 +965,7 @@
                 let groups = {};
                 if(roleTab === 'player') { ['6', '5', '4', '3', '2', '1'].forEach(g => groups[g + '年生'] = []); filtered.forEach(m => { const key = (m.grade || '6') + '年生'; if(!groups[key]) groups[key] = []; groups[key].push(m); }); }
                 else if(roleTab === 'parent') { ['6', '5', '4', '3', '2', '1'].forEach(g => { groups[`${g}年生・父`] = []; groups[`${g}年生・母`] = []; }); filtered.forEach(m => { const key = `${m.grade || '6'}年生・${m.parentType || '母'}`; if(!groups[key]) groups[key] = []; groups[key].push(m); }); }
-                else if(roleTab === 'staff') { ['監督', 'コーチ'].forEach(s => groups[s] = []); filtered.forEach(m => { const key = m.staffRole || 'コーチ'; if(!groups[key]) groups[key] = []; groups[key].push(m); }); }
+                else if(roleTab === 'staff') { ['代表', '副代表', '監督', 'コーチ'].forEach(s => groups[s] = []); filtered.forEach(m => { const key = m.staffRole || 'コーチ'; if(!groups[key]) groups[key] = []; groups[key].push(m); }); }
                 else { groups['家族・その他'] = filtered; }
 
                 Object.keys(groups).forEach(groupName => {
@@ -1110,7 +1112,7 @@
             const targetSchedules = (monthlyGroups[currentMonth] || []).filter(s => showPast || s.date >= todayStr);
             
             const teamMembers = (window.appData.members || []).filter(m => m.teams && m.teams.includes(currentTeam) && !m.isKyubu);
-            let parentsStaff = teamMembers.filter(m => m.role === 'parent' || m.role === 'staff' || m.role === 'family');
+            let parentsStaff = teamMembers.filter(m => m.role === 'parent' || (m.role === 'staff' && !['代表', '副代表'].includes(m.staffRole)) || m.role === 'family');
             sortParentsStaff(parentsStaff);
 
             if(parentsStaff.length === 0 || targetSchedules.length === 0) { 
@@ -1156,7 +1158,10 @@
                             allowed.forEach(roleName => {
                                 if(!entry.roles[roleName]) entry.roles[roleName] = '×';
                                 const curVal = entry.roles[roleName] || '×';
-                                html += `<div class="bg-slate-50 border rounded-lg p-1.5 flex flex-col gap-1 text-[11px] shadow-sm w-28 whitespace-nowrap"><span class="font-extrabold text-slate-700 truncate">${roleName}</span><select onchange="window.updateDutyCell('${m.name}', '${s.id}', '${roleName}', this.value)" class="bg-white border rounded px-1.5 py-1 font-bold outline-none text-center text-xs"><option value="×" ${curVal==='×'?'selected':''}>✕ 不可</option><option value="◯" ${curVal==='◯'?'selected':''}>〇 可能</option><option value="午前" ${curVal==='午前'?'selected':''}>△ 午前</option><option value="午後" ${curVal==='午後'?'selected':''}>▲ 午後</option><option value="調整中" ${curVal==='調整中'?'selected':''}>調整中</option></select></div>`;
+                                const isAssigned = (s.dutyAssignments && s.dutyAssignments[roleName] && s.dutyAssignments[roleName].includes(m.name));
+                                const boxClass = isAssigned ? "bg-yellow-100 border-yellow-400 rounded-lg p-1.5 flex flex-col gap-1 text-[11px] shadow-md w-28 whitespace-nowrap ring-1 ring-yellow-500" : "bg-slate-50 border rounded-lg p-1.5 flex flex-col gap-1 text-[11px] shadow-sm w-28 whitespace-nowrap";
+                                const titleClass = isAssigned ? "font-extrabold text-yellow-900 truncate" : "font-extrabold text-slate-700 truncate";
+                                html += `<div class="${boxClass}"><span class="${titleClass}">✔ ${roleName}</span><select onchange="window.updateDutyCell('${m.name}', '${s.id}', '${roleName}', this.value)" class="bg-white border rounded px-1.5 py-1 font-bold outline-none text-center text-xs text-slate-800"><option value="×" ${curVal==='×'?'selected':''}>✕ 不可</option><option value="◯" ${curVal==='◯'?'selected':''}>〇 可能</option><option value="午前" ${curVal==='午前'?'selected':''}>△ 午前</option><option value="午後" ${curVal==='午後'?'selected':''}>▲ 午後</option><option value="調整中" ${curVal==='調整中'?'selected':''}>調整中</option></select></div>`;
                             });
                             html += `</div></td>`;
                         }
@@ -1212,7 +1217,7 @@
             monthTabsEl.appendChild(toggleWrapper);
 
             const teamMembers = (window.appData.members || []).filter(m => m.teams && m.teams.includes(currentTeam) && !m.isKyubu);
-            let parentsStaff = teamMembers.filter(m => m.role === 'parent' || m.role === 'staff' || m.role === 'family');
+            let parentsStaff = teamMembers.filter(m => m.role === 'parent' || (m.role === 'staff' && !['代表', '副代表'].includes(m.staffRole)) || m.role === 'family');
             sortParentsStaff(parentsStaff);
 
             if(playerContainerEl) {
@@ -1285,7 +1290,11 @@
                         targetSchedules.forEach(s => {
                             if(!team.carAttendanceData[s.id]) team.carAttendanceData[s.id] = {}; if(!team.carAttendanceData[s.id][car.id]) team.carAttendanceData[s.id][car.id] = { status: 'absent' };
                             const curStatus = team.carAttendanceData[s.id][car.id].status || 'absent';
-                            cHtml += `<td class="p-2 text-center border-l whitespace-nowrap"><select onchange="window.updateCarAttendanceCell('${car.id}', '${s.id}', 'status', this.value)" class="bg-slate-50 border rounded px-2 py-1.5 text-xs font-bold outline-none shadow-sm"><option value="absent" ${curStatus==='absent'?'selected':''}>× 不可</option><option value="all" ${curStatus==='all'?'selected':''}>〇 出動可</option><option value="double_circle" ${curStatus==='double_circle'?'selected':''}>◎ 道具車・出動可</option><option value="am" ${curStatus==='am'?'selected':''}>△ 午前</option><option value="pm" ${curStatus==='pm'?'selected':''}>▲ 午後</option><option value="self_only" ${curStatus==='self_only'?'selected':''}>自車移動</option><option value="triangle" ${curStatus==='triangle'?'selected':''}>調整中</option></select></td>`;
+                            const isCarActive = (s.tripTo && s.tripTo.cars && s.tripTo.cars.some(c => c.masterId === car.id && c.isActive)) || (s.isReturnDifferent && s.tripFrom && s.tripFrom.cars && s.tripFrom.cars.some(c => c.masterId === car.id && c.isActive));
+                            const boxClass = isCarActive ? "bg-yellow-100 border-yellow-400 rounded-lg p-1.5 flex flex-col gap-1 text-[11px] shadow-md w-28 whitespace-nowrap ring-1 ring-yellow-500 mx-auto" : "bg-slate-50 border rounded-lg p-1.5 flex flex-col gap-1 text-[11px] shadow-sm w-28 whitespace-nowrap mx-auto";
+                            const titleClass = isCarActive ? "font-extrabold text-yellow-900 truncate" : "font-extrabold text-slate-700 truncate";
+                            const titleText = isCarActive ? "✔ 出動" : "車両可否";
+                            cHtml += `<td class="p-2 text-center border-l whitespace-nowrap align-middle"><div class="${boxClass}"><span class="${titleClass}">${titleText}</span><select onchange="window.updateCarAttendanceCell('${car.id}', '${s.id}', 'status', this.value)" class="bg-white border rounded px-1.5 py-1 font-bold outline-none text-center text-xs text-slate-800"><option value="absent" ${curStatus==='absent'?'selected':''}>× 不可</option><option value="all" ${curStatus==='all'?'selected':''}>〇 出動可</option><option value="double_circle" ${curStatus==='double_circle'?'selected':''}>◎ 道具車・出動可</option><option value="am" ${curStatus==='am'?'selected':''}>△ 午前</option><option value="pm" ${curStatus==='pm'?'selected':''}>▲ 午後</option><option value="self_only" ${curStatus==='self_only'?'selected':''}>自車移動</option><option value="triangle" ${curStatus==='triangle'?'selected':''}>調整中</option></select></div></td>`;
                         });
                         const lastSchedId = targetSchedules.length > 0 ? targetSchedules[targetSchedules.length - 1].id : '';
                         const noteVal = (lastSchedId && team.carAttendanceData[lastSchedId] && team.carAttendanceData[lastSchedId][car.id]) ? (team.carAttendanceData[lastSchedId][car.id].note || '') : '';
@@ -1472,7 +1481,10 @@
                 if (m.role === 'player') status = team.attendanceData?.[sched.id]?.[m.name]?.status || 'all';
                 else status = team.parentAttendanceData?.[sched.id]?.[m.name]?.status || 'absent';
                 const isAtt = m.role === 'player' ? ['all', 'am', 'pm'].includes(status) : ['all', 'triangle', 'am', 'pm'].includes(status);
-                const opt = document.createElement('option'); opt.value = m.name; opt.textContent = `${m.name} (${m.role === 'player' ? m.grade + '年' : m.role})${!isAtt ? ' (欠席等)' : ''}`; sel.appendChild(opt); 
+                const isRep = ['代表', '副代表'].includes(m.staffRole);
+                const opt = document.createElement('option'); opt.value = m.name; 
+                opt.textContent = `${m.name} (${m.role === 'player' ? m.grade + '年' : (m.role === 'staff' ? m.staffRole : m.role)})${(!isAtt && !isRep) ? ' (欠席等)' : ''}`; 
+                sel.appendChild(opt); 
             });
             document.getElementById('self-transport-modal').classList.remove('hidden'); document.getElementById('self-transport-modal').classList.add('flex');
         };
@@ -1510,7 +1522,10 @@
                 if (m.role === 'player') status = team.attendanceData?.[sched.id]?.[m.name]?.status || 'all';
                 else status = team.parentAttendanceData?.[sched.id]?.[m.name]?.status || 'absent';
                 const isAtt = m.role === 'player' ? ['all', 'am', 'pm'].includes(status) : ['all', 'triangle', 'am', 'pm'].includes(status);
-                const opt = document.createElement('option'); opt.value = m.name; opt.textContent = `${m.name} (${m.role === 'player' ? m.grade + '年' : m.role})${!isAtt ? ' (欠席等)' : ''}`; sel.appendChild(opt); 
+                const isRep = ['代表', '副代表'].includes(m.staffRole);
+                const opt = document.createElement('option'); opt.value = m.name; 
+                opt.textContent = `${m.name} (${m.role === 'player' ? m.grade + '年' : (m.role === 'staff' ? m.staffRole : m.role)})${(!isAtt && !isRep) ? ' (欠席等)' : ''}`; 
+                sel.appendChild(opt); 
             });
             document.getElementById('assign-target-car-id').value = carId; document.getElementById('assign-target-seat-idx').value = seatIndex;
             document.getElementById('seat-assign-modal').classList.remove('hidden'); document.getElementById('seat-assign-modal').classList.add('flex');
@@ -1527,7 +1542,10 @@
                 if (m.role === 'player') status = team.attendanceData?.[sched.id]?.[m.name]?.status || 'all';
                 else status = team.parentAttendanceData?.[sched.id]?.[m.name]?.status || 'absent';
                 const isAtt = m.role === 'player' ? ['all', 'am', 'pm'].includes(status) : ['all', 'triangle', 'am', 'pm'].includes(status);
-                const opt = document.createElement('option'); opt.value = m.name; opt.textContent = `${m.name} (${m.role === 'player' ? m.grade + '年' : m.role})${!isAtt ? ' (欠席等)' : ''}`; targetSelect.appendChild(opt); 
+                const isRep = ['代表', '副代表'].includes(m.staffRole);
+                const opt = document.createElement('option'); opt.value = m.name; 
+                opt.textContent = `${m.name} (${m.role === 'player' ? m.grade + '年' : (m.role === 'staff' ? m.staffRole : m.role)})${(!isAtt && !isRep) ? ' (欠席等)' : ''}`; 
+                targetSelect.appendChild(opt); 
             });
             const carsGrid = document.getElementById('quick-assign-cars-grid'); carsGrid.innerHTML = '';
             (tripData.cars || []).filter(c=>c.isActive).forEach(c => {
@@ -1967,7 +1985,7 @@
                     let isAtt = m.role === 'player' ? ['all', 'am', 'pm'].includes(status) : ['all', 'triangle', 'am', 'pm'].includes(status);
                     
                     if (!isAtt) { 
-                        if (m.role === 'player' || m.role === 'staff') { absents.push(m.name); } 
+                        if (m.role === 'player' || (m.role === 'staff' && !['代表', '副代表'].includes(m.staffRole))) { absents.push(m.name); } 
                     }
                     const inTo = (sched.tripTo?.selfTransport || []).includes(m.name); 
                     const inFrom = (sched.tripFrom?.selfTransport || []).includes(m.name);
@@ -2275,7 +2293,7 @@
             }
 
             const unassignedAll = teamMembers.filter(m => { let assigned = (tripData.selfTransport && tripData.selfTransport.includes(m.name)) || false; if(!assigned) (tripData.cars || []).filter(c=>c.isActive).forEach(c => { if(c.passengers && c.passengers.includes(m.name)) assigned = true; }); return !assigned; });
-            let buckets = { attendingPlayers: { title: '1. 出席選手', items: [] }, dutyParents: { title: '2. 当番・手伝い保護者', items: [] }, attendingStaff: { title: '3. 出席スタッフ', items: [] }, otherAttending: { title: '4. その他出席者 (〇/▲)', items: [] }, absent: { title: '5. 欠席・その他・未回答', items: [] } };
+            let buckets = { attendingPlayers: { title: '1. 出席選手', items: [] }, dutyParents: { title: '2. 当番・手伝い保護者', items: [] }, attendingStaff: { title: '3. 出席スタッフ', items: [] }, otherAttending: { title: '4. その他出席者 (〇/▲)', items: [] }, reps: { title: '5. 代表・副代表', items: [] }, absent: { title: '6. 欠席・その他・未回答', items: [] } };
             let eligibleMembersCount = 0;
 
             unassignedAll.forEach(m => {
@@ -2283,9 +2301,12 @@
                 if (m.role === 'player') status = team.attendanceData?.[sched.id]?.[m.name]?.status || 'all';
                 else status = team.parentAttendanceData?.[sched.id]?.[m.name]?.status || 'absent';
                 let isAttending = m.role === 'player' ? ['all', 'am', 'pm'].includes(status) : ['all', 'triangle', 'am', 'pm'].includes(status);
+                let isRep = ['代表', '副代表'].includes(m.staffRole);
                 
-                if (isAttending) eligibleMembersCount++;
-                if (!isAttending) { buckets.absent.items.push(m); } 
+                if (isAttending || isRep) eligibleMembersCount++;
+                
+                if (isRep) { buckets.reps.items.push(m); }
+                else if (!isAttending) { buckets.absent.items.push(m); } 
                 else {
                     if (m.role === 'player') { buckets.attendingPlayers.items.push(m); } else if (m.role === 'staff') { buckets.attendingStaff.items.push(m); } 
                     else if (m.role === 'parent') { let isDuty = false; (sched.dutyRoles || []).forEach(r => { if (sched.dutyAssignments?.[r]?.includes(m.name)) isDuty = true; }); if (isDuty) buckets.dutyParents.items.push(m); else buckets.otherAttending.items.push(m); } 

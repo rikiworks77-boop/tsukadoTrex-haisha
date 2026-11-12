@@ -1128,14 +1128,14 @@
                 
                 parentsStaff.forEach(m => {
                     const labelStr = m.role === 'staff' ? `スタッフ (${m.staffRole})` : (m.role === 'parent' ? `保護者 (${m.grade}年・${m.parentType})` : m.role);
-                    let hasAnyAttendance = targetSchedules.some(s => { const attEntry = team.parentAttendanceData && team.parentAttendanceData[s.id] && team.parentAttendanceData[s.id][m.name]; return attEntry && attEntry.status !== 'absent'; });
+                    let hasAnyAttendance = targetSchedules.some(s => { const attEntry = team.parentAttendanceData && team.parentAttendanceData[s.id] && team.parentAttendanceData[s.id][m.name]; return attEntry && !['absent', 'triangle'].includes(attEntry.status); });
                     if(!hasAnyAttendance) return;
                     
                     html += `<tr class="hover:bg-slate-50"><td class="p-2.5 font-extrabold text-slate-900 sticky left-0 z-10 bg-white shadow-sm whitespace-nowrap">${m.name}<br><span class="text-[10px] text-slate-500 font-normal">${labelStr}</span></td>`;
                     
                     targetSchedules.forEach(s => {
                         const attEntry = team.parentAttendanceData && team.parentAttendanceData[s.id] && team.parentAttendanceData[s.id][m.name];
-                        const isAbsent = !attEntry || attEntry.status === 'absent';
+                        const isAbsent = !attEntry || ['absent', 'triangle'].includes(attEntry.status);
                         const attStatus = attEntry ? attEntry.status : 'absent';
                         
                         if(isAbsent) { 
@@ -1484,7 +1484,7 @@
                 let status = 'all';
                 if (m.role === 'player') status = team.attendanceData?.[sched.id]?.[m.name]?.status || 'all';
                 else status = team.parentAttendanceData?.[sched.id]?.[m.name]?.status || 'absent';
-                const isAtt = m.role === 'player' ? ['all', 'am', 'pm'].includes(status) : ['all', 'triangle', 'am', 'pm'].includes(status);
+                const isAtt = m.role === 'player' ? ['all', 'am', 'pm'].includes(status) : ['all', 'am', 'pm'].includes(status);
                 const isRep = ['代表', '副代表'].includes(m.staffRole);
                 const opt = document.createElement('option'); opt.value = m.name; 
                 opt.textContent = `${m.name} (${m.role === 'player' ? m.grade + '年' : (m.role === 'staff' ? m.staffRole : m.role)})${(!isAtt && !isRep) ? ' (欠席等)' : ''}`; 
@@ -1525,7 +1525,7 @@
                 let status = 'all';
                 if (m.role === 'player') status = team.attendanceData?.[sched.id]?.[m.name]?.status || 'all';
                 else status = team.parentAttendanceData?.[sched.id]?.[m.name]?.status || 'absent';
-                const isAtt = m.role === 'player' ? ['all', 'am', 'pm'].includes(status) : ['all', 'triangle', 'am', 'pm'].includes(status);
+                const isAtt = m.role === 'player' ? ['all', 'am', 'pm'].includes(status) : ['all', 'am', 'pm'].includes(status);
                 const isRep = ['代表', '副代表'].includes(m.staffRole);
                 const opt = document.createElement('option'); opt.value = m.name; 
                 opt.textContent = `${m.name} (${m.role === 'player' ? m.grade + '年' : (m.role === 'staff' ? m.staffRole : m.role)})${(!isAtt && !isRep) ? ' (欠席等)' : ''}`; 
@@ -1545,7 +1545,7 @@
                 let status = 'all';
                 if (m.role === 'player') status = team.attendanceData?.[sched.id]?.[m.name]?.status || 'all';
                 else status = team.parentAttendanceData?.[sched.id]?.[m.name]?.status || 'absent';
-                const isAtt = m.role === 'player' ? ['all', 'am', 'pm'].includes(status) : ['all', 'triangle', 'am', 'pm'].includes(status);
+                const isAtt = m.role === 'player' ? ['all', 'am', 'pm'].includes(status) : ['all', 'am', 'pm'].includes(status);
                 const isRep = ['代表', '副代表'].includes(m.staffRole);
                 const opt = document.createElement('option'); opt.value = m.name; 
                 opt.textContent = `${m.name} (${m.role === 'player' ? m.grade + '年' : (m.role === 'staff' ? m.staffRole : m.role)})${(!isAtt && !isRep) ? ' (欠席等)' : ''}`; 
@@ -1710,7 +1710,7 @@
             shuffledSchedules.forEach(s => {
                 let availableForToday = dutyMembers.filter(m => { 
                     const status = team.parentAttendanceData?.[s.id]?.[m.name]?.status || 'absent'; 
-                    if(!['all', 'am', 'pm', 'triangle'].includes(status)) return false; 
+                    if(!['all', 'am', 'pm'].includes(status)) return false; 
                     const dutyPref = team.dutyData?.[s.id]?.[m.name]?.roles?.['当番']; 
                     if(dutyPref === '×') return false; 
                     const weight = getWeight(s.id, m.name);
@@ -1932,8 +1932,12 @@
                             if (gradePlayers.length === 0 && orderList.length === 0) return;
 
                             const leader = bs.leaders?.[g] || '未定';
-                            const dutyCheckedEscorts = sched.dutyAssignments?.['自転車引率'] || [];
-                            const validEscorts = (bs.escorts?.[g] || []).filter(name => dutyCheckedEscorts.includes(name));
+                            const validEscorts = (bs.escorts?.[g] || []).filter(name => {
+                                const attStatus = team.parentAttendanceData?.[sched.id]?.[name]?.status || 'absent';
+                                if (!['all', 'am', 'pm'].includes(attStatus)) return false;
+                                const dutyPref = team.dutyData?.[sched.id]?.[name]?.roles?.['自転車引率'];
+                                return ['◯', '午前', '午後'].includes(dutyPref);
+                            });
                             const escortStr = validEscorts.length > 0 ? validEscorts.map(getFormattedNameForLine).join('・') : '未定';
 
                             t += `\n◆ ${g}年生（${gradePlayers.length > 0 ? gradePlayers.length : orderList.length}名）\n`;
@@ -1986,7 +1990,7 @@
                     let status = 'all';
                     if (m.role === 'player') status = team.attendanceData?.[sched.id]?.[m.name]?.status || 'all';
                     else status = team.parentAttendanceData?.[sched.id]?.[m.name]?.status || 'absent';
-                    let isAtt = m.role === 'player' ? ['all', 'am', 'pm'].includes(status) : ['all', 'triangle', 'am', 'pm'].includes(status);
+                    let isAtt = m.role === 'player' ? ['all', 'am', 'pm'].includes(status) : ['all', 'am', 'pm'].includes(status);
                     
                     if (!isAtt) { 
                         if (m.role === 'player' || (m.role === 'staff' && !['代表', '副代表'].includes(m.staffRole))) { absents.push(m.name); } 
@@ -2036,7 +2040,7 @@
                         return ['all', 'am', 'pm'].includes(status);
                     } else {
                         status = team.parentAttendanceData?.[sched.id]?.[m.name]?.status || 'absent';
-                        return ['all', 'triangle', 'am', 'pm'].includes(status);
+                        return ['all', 'am', 'pm'].includes(status);
                     }
                 });
 
@@ -2250,19 +2254,29 @@
                     if(!bikeSettings.leaders) bikeSettings.leaders = {}; if(!bikeSettings.escorts) bikeSettings.escorts = {};
                     const useConvoyChecked = bikeSettings.useConvoy ? 'checked' : '';
 
-                    const dutyCheckedEscorts = sched.dutyAssignments?.['自転車引率'] || [];
-                    const eligibleEscorts = staffAndParents.filter(m => dutyCheckedEscorts.includes(m.name));
+                    const eligibleBikeMembers = staffAndParents.filter(m => {
+                        const attStatus = team.parentAttendanceData?.[sched.id]?.[m.name]?.status || 'absent';
+                        if (!['all', 'am', 'pm'].includes(attStatus)) return false;
+                        const dutyPref = team.dutyData?.[sched.id]?.[m.name]?.roles?.['自転車引率'];
+                        return ['◯', '午前', '午後'].includes(dutyPref);
+                    });
 
                     let gradeBlocksHtml = '';
                     ['6', '5', '4', '3', '2', '1'].forEach(grade => {
                         let gradePlayers = players.filter(p => p.grade === grade); if(gradePlayers.length === 0) return;
-                        let leaderOpts = '<option value="">-- 先導を選択 --</option>'; staffAndParents.forEach(m => { leaderOpts += `<option value="${m.name}" ${bikeSettings.leaders[grade] === m.name ? 'selected' : ''}>${m.name} (${m.role === 'staff' ? 'スタッフ' : '保護者'})</option>`; });
+                        let leaderOpts = '<option value="">-- 先導を選択 --</option>';
+                        const currentLeader = bikeSettings.leaders[grade] || '';
+                        eligibleBikeMembers.forEach(m => { leaderOpts += `<option value="${m.name}" ${currentLeader === m.name ? 'selected' : ''}>${m.name} (${m.role === 'staff' ? 'スタッフ' : '保護者'})</option>`; });
+                        if (currentLeader && !eligibleBikeMembers.some(m => m.name === currentLeader)) {
+                            const lm = staffAndParents.find(m => m.name === currentLeader);
+                            if (lm) leaderOpts += `<option value="${lm.name}" selected>${lm.name} (${lm.role === 'staff' ? 'スタッフ' : '保護者'})</option>`;
+                        }
                         
                         let escortsHtml = ''; 
-                        if(eligibleEscorts.length === 0) {
-                            escortsHtml = '<div class="text-[11px] text-slate-400 p-1">※当番・お手伝い割り当てで「自転車引率」に☑が入ったメンバーがいません</div>';
+                        if(eligibleBikeMembers.length === 0) {
+                            escortsHtml = '<div class="text-[11px] text-slate-400 p-1">※お手伝い確認で「自転車引率」を可（〇・午前・午後）にしたメンバーがいません</div>';
                         } else {
-                            eligibleEscorts.forEach(m => { 
+                            eligibleBikeMembers.forEach(m => { 
                                 const isChecked = (bikeSettings.escorts[grade] || []).includes(m.name); 
                                 escortsHtml += `<label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer bg-white border rounded-lg px-2.5 py-1.5"><input type="checkbox" onchange="window.toggleGradeEscort('${grade}', '${m.name}')" ${isChecked ? 'checked' : ''} class="rounded"><span>${m.name}</span></label>`; 
                             });
@@ -2274,7 +2288,7 @@
                         
                         const convoyListClass = bikeSettings.useConvoy ? 'space-y-1.5 pt-2 border-t' : 'space-y-1.5 pt-2 border-t hidden';
 
-                        gradeBlocksHtml += `<div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3"><div class="text-xs font-black text-blue-900 border-b pb-1">◆ ${grade}年生 (${gradePlayers.length}名)</div><div class="grid grid-cols-1 sm:grid-cols-2 gap-3"><div><label class="block text-[11px] font-bold text-slate-600 mb-1">🚩 先導</label><select onchange="window.updateGradeLeader('${grade}', this.value)" class="w-full bg-white border rounded-lg px-2.5 py-1.5 text-xs font-bold outline-none">${leaderOpts}</select></div><div><label class="block text-[11px] font-bold text-slate-600 mb-1">🏁 引率（当番で引率☑のメンバーのみ）</label><div class="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto p-2 bg-white border rounded-lg">${escortsHtml}</div></div></div><div id="convoy-order-block-${grade}" class="${convoyListClass}"><div class="text-[11px] font-bold text-slate-600 mb-1">🚴 車列の並び順</div><div class="space-y-1">${listHtml}</div></div></div>`;
+                        gradeBlocksHtml += `<div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3"><div class="text-xs font-black text-blue-900 border-b pb-1">◆ ${grade}年生 (${gradePlayers.length}名)</div><div class="grid grid-cols-1 sm:grid-cols-2 gap-3"><div><label class="block text-[11px] font-bold text-slate-600 mb-1">🚩 先導</label><select onchange="window.updateGradeLeader('${grade}', this.value)" class="w-full bg-white border rounded-lg px-2.5 py-1.5 text-xs font-bold outline-none">${leaderOpts}</select></div><div><label class="block text-[11px] font-bold text-slate-600 mb-1">🏁 引率（自転車引率可のメンバーのみ）</label><div class="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto p-2 bg-white border rounded-lg">${escortsHtml}</div></div></div><div id="convoy-order-block-${grade}" class="${convoyListClass}"><div class="text-[11px] font-bold text-slate-600 mb-1">🚴 車列の並び順</div><div class="space-y-1">${listHtml}</div></div></div>`;
                     });
                     tHtml += `<div class="bg-white p-4 sm:p-5 rounded-2xl shadow-md border border-slate-200 space-y-4 mb-5"><div class="border-b pb-3 flex justify-between items-center"><h3 class="text-base font-black text-blue-900">🚲 自転車移動の設定 (${!sched.isReturnDifferent ? '往復共通' : (isTo ? '往路' : '復路')})</h3><label class="flex items-center gap-2 bg-blue-50 border px-3 py-1.5 rounded-xl cursor-pointer font-bold text-xs text-blue-900"><input type="checkbox" onchange="window.toggleUseConvoy(this.checked)" ${useConvoyChecked} class="w-4 h-4 rounded text-blue-600">車列を設定する</label></div><div class="space-y-4">${gradeBlocksHtml}</div></div>`;
                 }
@@ -2304,7 +2318,7 @@
                 let status = 'all';
                 if (m.role === 'player') status = team.attendanceData?.[sched.id]?.[m.name]?.status || 'all';
                 else status = team.parentAttendanceData?.[sched.id]?.[m.name]?.status || 'absent';
-                let isAttending = m.role === 'player' ? ['all', 'am', 'pm'].includes(status) : ['all', 'triangle', 'am', 'pm'].includes(status);
+                let isAttending = m.role === 'player' ? ['all', 'am', 'pm'].includes(status) : ['all', 'am', 'pm'].includes(status);
                 let isRep = ['代表', '副代表'].includes(m.staffRole);
                 
                 if (isAttending || isRep) eligibleMembersCount++;
@@ -2376,19 +2390,19 @@
                 if ((sched.dutyRoles || []).length === 0) { dutyGrid.innerHTML = '<div class="col-span-full text-xs text-slate-400">当番・お手伝い募集項目が設定されていません。</div>'; } 
                 else {
                     (sched.dutyRoles || []).forEach(role => {
-                        const isBikeRole = role.includes('先導') || role.includes('引率'); const roleBox = document.createElement('div'); roleBox.className = "bg-slate-50 border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col"; roleBox.innerHTML = `<h4 class="font-black text-blue-900 border-b pb-2 mb-3">📍 ${role}</h4>`;
+                        const isStaffAllowedRole = role.includes('先導') || role.includes('引率') || role === '塁審'; const roleBox = document.createElement('div'); roleBox.className = "bg-slate-50 border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col"; roleBox.innerHTML = `<h4 class="font-black text-blue-900 border-b pb-2 mb-3">📍 ${role}</h4>`;
                         const listDiv = document.createElement('div'); listDiv.className = "flex flex-col gap-1.5 max-h-64 overflow-y-auto pr-1 flex-1 mb-2"; let displayCount = 0;
                         eligibleParentsStaff.forEach(m => {
                             const standardRoles = ['当番', 'スコアラー', '球数カウント', '塁審', '自転車引率']; let allowed = m.allowedDuties || standardRoles; if (allowed.length === 1 && allowed[0] === 'NONE') allowed = [];
                             if (standardRoles.includes(role) && !allowed.includes(role)) return;
-                            const isAssigned = sched.dutyAssignments?.[role]?.includes(m.name); const att = team.parentAttendanceData?.[sched.id]?.[m.name]; const status = att ? att.status : 'absent'; const isAtt = ['all', 'triangle', 'am', 'pm'].includes(status);
-                            if (m.role === 'staff' && !isBikeRole && !isAssigned) return;
+                            const isAssigned = sched.dutyAssignments?.[role]?.includes(m.name); const att = team.parentAttendanceData?.[sched.id]?.[m.name]; const status = att ? att.status : 'absent'; const isAtt = ['all', 'am', 'pm'].includes(status);
+                            if (m.role === 'staff' && !isStaffAllowedRole && !isAssigned) return;
                             if (isAtt || isAssigned) {
                                 displayCount++;
                                 if(!team.dutyData[sched.id]) team.dutyData[sched.id] = {}; if(!team.dutyData[sched.id][m.name]) team.dutyData[sched.id][m.name] = { roles: {}, note: '' }; if(!team.dutyData[sched.id][m.name].roles) team.dutyData[sched.id][m.name].roles = {}; if(!team.dutyData[sched.id][m.name].roles[role]) team.dutyData[sched.id][m.name].roles[role] = '×';
                                 const req = team.dutyData[sched.id][m.name].roles[role]; let reqBadge = '';
                                 if(req === '◯') reqBadge = '<span class="text-[10px] bg-blue-100 text-blue-700 px-1 rounded border border-blue-200 whitespace-nowrap">希望◯</span>'; else if(req === '×') reqBadge = '<span class="text-[10px] bg-rose-50 text-rose-500 px-1 rounded border border-rose-200 whitespace-nowrap">× 不可</span>'; else if(req === '午前') reqBadge = '<span class="text-[10px] bg-indigo-50 text-indigo-600 px-1 rounded border border-indigo-200 whitespace-nowrap">午前</span>'; else if(req === '午後') reqBadge = '<span class="text-[10px] bg-purple-50 text-purple-600 px-1 rounded border border-purple-200 whitespace-nowrap">午後</span>'; else if(req === '調整中') reqBadge = '<span class="text-[10px] bg-amber-50 text-amber-600 px-1 rounded border border-amber-200 whitespace-nowrap">調整中</span>';
-                                const isAbsent = (team.parentAttendanceData?.[sched.id]?.[m.name]?.status || 'absent') === 'absent'; const absentBadge = isAbsent ? '<span class="text-[10px] text-rose-500 font-bold ml-1">(欠席)</span>' : '';
+                                const isAbsent = ['absent', 'triangle'].includes(team.parentAttendanceData?.[sched.id]?.[m.name]?.status || 'absent'); const absentBadge = isAbsent ? '<span class="text-[10px] text-rose-500 font-bold ml-1">(欠席)</span>' : '';
                                 listDiv.innerHTML += `<label class="flex items-center justify-between gap-2 text-xs font-bold p-2 border rounded-lg cursor-pointer transition ${isAssigned ? 'bg-blue-100/50 border-blue-300' : 'bg-white border-slate-200 hover:bg-slate-100'}"><div class="flex items-center gap-2 overflow-hidden"><input type="checkbox" onchange="window.toggleDutyAssignment('${role}', '${m.name}', this.checked)" ${isAssigned ? 'checked' : ''} class="w-4 h-4 rounded text-blue-600 flex-shrink-0"><span class="truncate">${m.name} <span class="text-[10px] text-slate-400 font-normal">(${m.role==='staff'?'ｽﾀｯﾌ':m.grade+'年'})</span>${absentBadge}</span></div><div class="ml-2 flex-shrink-0">${reqBadge}</div></label>`;
                             }
                         });
@@ -2398,7 +2412,7 @@
                         eligibleParentsStaff.forEach(m => { 
                             const standardRoles = ['当番', 'スコアラー', '球数カウント', '塁審', '自転車引率']; let allowed = m.allowedDuties || standardRoles; if (allowed.length === 1 && allowed[0] === 'NONE') allowed = [];
                             if (standardRoles.includes(role) && !allowed.includes(role)) return;
-                            const isAssigned = sched.dutyAssignments?.[role]?.includes(m.name); const att = team.parentAttendanceData?.[sched.id]?.[m.name]; const isAtt = ['all', 'triangle', 'am', 'pm'].includes(att ? att.status : 'absent'); const isHiddenStaff = (m.role === 'staff' && !isBikeRole && !isAssigned);
+                            const isAssigned = sched.dutyAssignments?.[role]?.includes(m.name); const att = team.parentAttendanceData?.[sched.id]?.[m.name]; const isAtt = ['all', 'am', 'pm'].includes(att ? att.status : 'absent'); const isHiddenStaff = (m.role === 'staff' && !isStaffAllowedRole && !isAssigned);
                             if ((!isAtt && !isAssigned) || isHiddenStaff) { addOpts += `<option value="${m.name}">${m.name} (${m.role==='staff'?'ｽﾀｯﾌ':m.grade+'年'})</option>`; }
                         });
                         const addDiv = document.createElement('div'); addDiv.innerHTML = `<select onchange="if(this.value){ window.toggleDutyAssignment('${role}', this.value, true); this.value=''; }" class="w-full text-xs font-bold border border-slate-300 rounded px-2 py-2 sm:py-1.5 bg-white text-slate-600 outline-none">${addOpts}</select>`; roleBox.appendChild(addDiv);
